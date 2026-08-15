@@ -1,7 +1,7 @@
 """Entrypoint. Runs under mrunner on the cluster, or from a JSON file locally.
 
-  local:   pixi run python main.py --config configs/tiny_local.json
-  cluster: mrunner --config ~/.mrunner.yaml --context <ctx> run mrunner_specs/sft_baseline.py
+local:   pixi run python main.py --config configs/tiny_local.json
+cluster: mrunner --config ~/.mrunner.yaml --context <ctx> run mrunner_specs/sft_baseline.py
 """
 
 import argparse
@@ -10,7 +10,9 @@ import logging
 import sys
 
 logging.basicConfig(
-    level=logging.INFO, format="[%(levelname)s][%(name)s] %(message)s", stream=sys.stdout
+    level=logging.INFO,
+    format="[%(levelname)s][%(name)s] %(message)s",
+    stream=sys.stdout,
 )
 
 
