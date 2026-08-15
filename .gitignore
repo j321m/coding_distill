@@ -216,3 +216,15 @@ __marimo__/
 
 # Streamlit
 .streamlit/secrets.toml
+
+# repo specific
+.pixi/
+.venv/
+__pycache__/
+*.pyc
+*.egg-info/
+out/
+outputs/
+data/
+wandb/
+.mrunner/
