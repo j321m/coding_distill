@@ -17,8 +17,7 @@ accelerate = "*"
 attrs = "*"
 wandb = ">=0.23.1, <0.24"
 black = "==25.1.0"
-# mrunner is not on PyPI -- install from the fork your group uses, e.g.
-# mrunner = { git = "https://github.com/awarelab/mrunner.git" }
+mrunner = { git = "https://gitlab.com/awarelab/mrunner.git" }
 
 [target.linux-64.pypi-dependencies]
 torch = { version = "==2.7.1", index = "https://download.pytorch.org/whl/cu128" }
