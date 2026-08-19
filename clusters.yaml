@@ -1,0 +1,12 @@
+contexts:
+  entropy:
+    backend_type: slurm
+    # ...
+
+  helios:
+    backend_type: slurm
+    # ...
+
+  lem:
+    backend_type: slurm
+    # ...

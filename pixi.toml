@@ -1,0 +1,14 @@
+[workspace]
+authors = ["Janek <jan.malasnicki@gmail.com>"]
+channels = ["conda-forge"]
+name = "coding_distill"
+platforms = ["linux-64", "osx-arm64"]
+version = "0.1.0"
+
+[dependencies]
+python = "==3.12.3"
+
+[pypi-dependencies]
+# coding_distill = { path = ".", editable = true }
+black = "==25.1.0"
+mrunner = { git = "https://gitlab.com/awarelab/mrunner.git" }
