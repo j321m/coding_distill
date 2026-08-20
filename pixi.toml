@@ -2,12 +2,14 @@
 authors = ["Janek <jan.malasnicki@gmail.com>"]
 channels = ["conda-forge"]
 name = "coding_distill"
-platforms = ["linux-64", "osx-arm64"]
+platforms = ["linux-64"]
 version = "0.1.0"
 
 [tasks]
 # repo-scoped mrunner: pixi run mrun --context entropy run configs/toy.py
 mrun = "mrunner --config clusters.yaml"
+# local CPU run, no backend involved
+debug = "python main.py --ex configs/debug.py"
 update-pixi = "python update_pixi.py"
 
 [dependencies]
@@ -16,4 +18,19 @@ python = "==3.12.3"
 [pypi-dependencies]
 # coding_distill = { path = ".", editable = true }
 black = "==25.1.0"
+# pin the CUDA build; PyPI's default torch varies in the CUDA it bundles
+torch = { version = "==2.13.0", index = "https://download.pytorch.org/whl/cu130" }
+transformers = "*"
+datasets = "*"
+accelerate = "*"
 mrunner = { git = "https://gitlab.com/awarelab/mrunner.git" }
+
+# torch's CUDA deps, redeclared only to fetch them off PyPI, which entropy
+# reaches at ~1 MB/s -- the pytorch index serves the same wheels 50x faster
+nvidia-cublas = { version = "*", index = "https://download.pytorch.org/whl/cu130" }
+nvidia-cufft = { version = "*", index = "https://download.pytorch.org/whl/cu130" }
+nvidia-cusolver = { version = "*", index = "https://download.pytorch.org/whl/cu130" }
+nvidia-cusparselt-cu13 = { version = "*", index = "https://download.pytorch.org/whl/cu130" }
+nvidia-cudnn-cu13 = { version = "*", index = "https://download.pytorch.org/whl/cu130" }
+nvidia-nccl-cu13 = { version = "*", index = "https://download.pytorch.org/whl/cu130" }
+triton = { version = "*", index = "https://download.pytorch.org/whl/cu130" }

@@ -30,6 +30,7 @@ EXCLUDE = [
     "pixi.lock",
     ".vscode",
     "__pycache__",
+    "out",
 ]
 
 experiment = Experiment(
@@ -37,9 +38,25 @@ experiment = Experiment(
     # plain `python`, not `pixi run` -- prolog_cmd already activated $PIXI_HOME
     script="python main.py",
     exclude=EXCLUDE,
+    # flat so mrunner can sweep them; main.py nests by prefix
     parameters=Munch(
-        learning_rate=0.001,
-        batch_size=64,
+        model_name="HuggingFaceTB/SmolLM2-135M",
+        model_pad_token="<|endoftext|>",
+        data_name="roneneldan/TinyStories",
+        data_config=None,
+        data_split="train[:1%]",
+        data_text_field="text",
+        data_max_length=512,
+        data_padding="max_length",
+        data_truncation=True,
+        train_output_dir="out",
+        train_learning_rate=3e-4,
+        train_batch_size=8,
+        train_num_epochs=1,
+        train_max_steps=100,
+        train_logging_steps=10,
+        train_save_steps=500,
+        train_bf16=True,
     ),
 )
 

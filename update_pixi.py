@@ -16,6 +16,10 @@ Usage:
     pixi run python update_pixi.py --context entropy
     pixi run python update_pixi.py --context entropy --dry-run
     pixi run python update_pixi.py --context entropy --login   # skip srun
+    pixi run python update_pixi.py --context entropy --verbose # `pixi install -v`
+
+Every run is timestamped and logged twice: on the cluster in
+~/update_pixi/<timestamp>/install.log, and locally in out/update_pixi/.
 """
 
 import argparse
@@ -45,8 +49,10 @@ OVERRIDDEN_OPTION_PREFIXES = (
 )
 INSTALL_JOB_OPTIONS = [
     "--job-name=update_pixi",
-    "--cpus-per-task=4",
-    "--mem=8G",
+    # the install is dominated by unpacking the torch/CUDA wheels, which uv does
+    # in parallel -- more cores is the cheapest speedup available here
+    "--cpus-per-task=16",
+    "--mem=32G",
     "--time=1:00:00",
 ]
 
@@ -122,9 +128,27 @@ def install_job_options(sbatch_options: list[str]) -> list[str]:
     return kept + INSTALL_JOB_OPTIONS
 
 
-def build_install_script(env_setup: str, staging_dir: str) -> str:
+def build_install_script(env_setup: str, staging_dir: str, verbose: bool) -> str:
+    """Bash driver for the install, run either under srun or on the login node.
+
+    Everything it prints is timestamped and teed into `{staging_dir}/install.log`
+    on the cluster, so a slow/stuck install can be attributed to a phase (solve
+    vs. download vs. unpack) instead of guessed at.
+    """
+    install_flags = " -v" if verbose else ""
     return f"""#!/usr/bin/env bash
 set -euo pipefail
+
+log_file="{staging_dir}/install.log"
+exec > >(tee -a "$log_file") 2>&1
+
+start=$(date +%s)
+step() {{
+  echo "[$(date +%H:%M:%S) +$(( $(date +%s) - start ))s] $*"
+}}
+trap 'step "exited with status $?"' EXIT
+
+step "host=$(hostname) log=$log_file"
 
 {env_setup}
 
@@ -133,25 +157,40 @@ if ! command -v pixi > /dev/null; then
   exit 1
 fi
 
-echo "PIXI_HOME=$PIXI_HOME"
+step "pixi $(pixi --version 2>&1 | tail -1), PIXI_HOME=$PIXI_HOME"
 mkdir -p "$PIXI_HOME"
+
+step "filesystem holding PIXI_HOME:"
+df -hT "$PIXI_HOME" | sed 's/^/    /'
 
 # keep the previous manifests around, so a bad update can be traced/reverted
 ts=$(date +%Y_%m_%d_%H_%M_%S)
 if [ -f "$PIXI_HOME/pixi.toml" ] || [ -f "$PIXI_HOME/pixi.lock" ]; then
+  step "backing up previous manifests"
   backup="$PIXI_HOME/old_pixi_files/obsolete_since_$ts"
   mkdir -p "$backup"
   [ -f "$PIXI_HOME/pixi.toml" ] && mv -f "$PIXI_HOME/pixi.toml" "$backup/"
   [ -f "$PIXI_HOME/pixi.lock" ] && mv -f "$PIXI_HOME/pixi.lock" "$backup/"
 fi
 
+step "installing new manifests"
 mv -f "{staging_dir}/pixi.toml" "$PIXI_HOME/"
 if [ -f "{staging_dir}/pixi.lock" ]; then
   mv -f "{staging_dir}/pixi.lock" "$PIXI_HOME/"
 fi
 
-pixi install --manifest-path "$PIXI_HOME/pixi.toml"
-echo "pixi env at $PIXI_HOME is up to date."
+step "running pixi install (this is the slow part: ~GBs of torch/CUDA wheels)"
+# stdout is a pipe (see the tee above), and pixi hides its progress bars unless
+# it is talking to a terminal -- so hand it a pty via `script`, which still lets
+# everything flow through the tee into the log
+install_cmd="pixi install{install_flags} --manifest-path $PIXI_HOME/pixi.toml"
+if command -v script > /dev/null; then
+  script -qefc "$install_cmd" /dev/null
+else
+  $install_cmd
+fi
+
+step "pixi env at $PIXI_HOME is up to date."
 """
 
 
@@ -167,6 +206,11 @@ def main() -> None:
         "--login",
         action="store_true",
         help="run `pixi install` on the login node instead of allocating with srun",
+    )
+    parser.add_argument(
+        "--verbose",
+        action="store_true",
+        help="pass -v to `pixi install` (shows the solve/fetch/link phases)",
     )
     parser.add_argument("--dry-run", action="store_true")
     args = parser.parse_args()
@@ -214,7 +258,7 @@ def main() -> None:
         if pixi_lock.exists():
             connection.put(str(pixi_lock), remote=f"{staging_dir}/pixi.lock")
 
-        script = build_install_script(env_setup, staging_dir)
+        script = build_install_script(env_setup, staging_dir, args.verbose)
         with tempfile.NamedTemporaryFile("w", suffix=".sh") as local_script:
             local_script.write(script)
             local_script.flush()
@@ -224,14 +268,20 @@ def main() -> None:
         command = f"bash {remote_script}"
         if not args.login:
             command = f"{srun_cmd} {command}"
-        print(f"\nRunning: {command}\n")
+        print(f"\nRunning: {command}")
+        print(f"Remote log: {host}:{staging_dir}/install.log (tail -f it to watch)\n")
 
         result = connection.run(command, pty=True, warn=True)
 
+        local_log = project_root / "out" / "update_pixi" / f"{timestamp}.log"
+        local_log.parent.mkdir(parents=True, exist_ok=True)
+        local_log.write_text(result.stdout)
+        print(f"\nLog saved to {local_log}")
+
     if result.ok:
-        print("\n✓ pixi environment updated")
+        print("✓ pixi environment updated")
     else:
-        print("\n✗ pixi install failed")
+        print("✗ pixi install failed")
         sys.exit(1)
 
 
