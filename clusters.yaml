@@ -1,7 +1,38 @@
+# ln -sfn "$PWD/clusters.yaml" ~/.config/mrunner/config.yaml  => --config optional
+
 contexts:
+
   entropy:
     backend_type: slurm
-    # ...
+    slurm_url: entropy
+    # absolute + literal only: relative breaks the untar, $HOME/~ break the SFTP upload
+    storage_dir: /home/j321m/coding_distill
+    cmd_type: sbatch
+
+    sbatch_options:
+      - "--partition=h100"
+      - "--nodes=1"
+      - "--gres=gpu:4"
+      - "--cpus-per-gpu=14"
+      - "--mem-per-gpu=90G"
+      - "--time=2-00:00:00"
+
+    prolog_cmd: |
+      export PROJECT_HOME_PATH=/storage_nvme_4/coding_distill
+      export HF_HOME=$PROJECT_HOME_PATH/hf_cache
+
+      # pixi env lives outside of $HOME, together with its caches
+      export PIXI_HOME=$PROJECT_HOME_PATH/$USER/pixi
+      export PATH="$HOME/.pixi/bin:$PATH"
+      export XDG_DATA_HOME="$PIXI_HOME/data"
+      export XDG_CACHE_HOME="$PIXI_HOME/cache"
+      export XDG_STATE_HOME="$PIXI_HOME/state"
+      export RATTLER_CACHE_DIR="$XDG_CACHE_HOME/rattler"
+      export UV_CACHE_DIR="$XDG_CACHE_HOME/uv"
+      export PIXI_CACHE_DIR="$XDG_CACHE_HOME/pixi"
+
+      # activate the out-of-tree env
+      eval "$(pixi shell-hook --manifest-path "$PIXI_HOME/pixi.toml")"
 
   helios:
     backend_type: slurm

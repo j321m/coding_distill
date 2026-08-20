@@ -5,6 +5,11 @@ name = "coding_distill"
 platforms = ["linux-64", "osx-arm64"]
 version = "0.1.0"
 
+[tasks]
+# repo-scoped mrunner: pixi run mrun --context entropy run configs/toy.py
+mrun = "mrunner --config clusters.yaml"
+update-pixi = "python update_pixi.py"
+
 [dependencies]
 python = "==3.12.3"
 
