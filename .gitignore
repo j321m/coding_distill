@@ -1,3 +1,4 @@
 .vscode/
 .pixi/
 __pycache__/
+out/
