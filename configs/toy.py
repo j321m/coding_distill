@@ -49,7 +49,10 @@ experiment = Experiment(
         data_max_length=512,
         data_padding="max_length",
         data_truncation=True,
-        train_output_dir="out",
+        # Checkpoints go to the NVMe, not to the mrunner-copied repo (which is
+        # on $HOME). Only reachable from a compute node, so it is resolved at
+        # runtime -- $USER is expanded and the job id appended, see trainer.py.
+        train_output_dir="/storage_nvme_4/coding_distill/$USER/runs",
         train_learning_rate=3e-4,
         train_batch_size=8,
         train_num_epochs=1,

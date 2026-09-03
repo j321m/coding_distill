@@ -36,13 +36,18 @@ for chat data in §9.2; the raw-text path needs a manual append.
 
 ---
 
-## 2. Checkpoints are landing on `$HOME` — DO FIRST
+## 2. Checkpoints off `$HOME` — DONE
 
-`train_output_dir="out"` is inside the mrunner-copied repo, which lands under
-`storage_dir: /home/j321m/coding_distill` — entropy's `$HOME`, the filesystem with
-the **file-count quota** that the whole out-of-tree pixi setup exists to avoid.
-Move to `$PROJECT_HOME_PATH=/storage_nvme_4/coding_distill` alongside `HF_HOME`
-(export `$RUN_OUT` in `clusters.yaml` `prolog_cmd`, default from it).
+Checkpoints to the NVMe; code and logs stay on `$HOME` on purpose. `storage_dir`
+unchanged — `/storage_nvme_4` is invisible from the login node, where mrunner
+uploads, so the path resolves at runtime instead:
+`train_output_dir="/storage_nvme_4/coding_distill/$USER/runs"` ->
+`src/trainer.py:resolve_output_dir` expands it and appends `$SLURM_JOB_ID`.
+
+The job-id subdir replaces the uniqueness that came free from mrunner's per-run
+cwd (`backends/slurm.py:82`).
+
+### Cadence: linear for now
 
 ### Cadence: linear for now
 
