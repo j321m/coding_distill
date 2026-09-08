@@ -128,7 +128,9 @@ def install_job_options(sbatch_options: list[str]) -> list[str]:
     return kept + INSTALL_JOB_OPTIONS
 
 
-def build_install_script(env_setup: str, staging_dir: str, verbose: bool) -> str:
+def build_install_script(
+    env_setup: str, staging_dir: str, environment: str, verbose: bool
+) -> str:
     """Bash driver for the install, run either under srun or on the login node.
 
     Everything it prints is timestamped and teed into `{staging_dir}/install.log`
@@ -183,7 +185,7 @@ step "running pixi install (this is the slow part: ~GBs of torch/CUDA wheels)"
 # stdout is a pipe (see the tee above), and pixi hides its progress bars unless
 # it is talking to a terminal -- so hand it a pty via `script`, which still lets
 # everything flow through the tee into the log
-install_cmd="pixi install{install_flags} --manifest-path $PIXI_HOME/pixi.toml"
+install_cmd="pixi install -e {environment} --locked{install_flags} --manifest-path $PIXI_HOME/pixi.toml"
 if command -v script > /dev/null; then
   script -qefc "$install_cmd" /dev/null
 else
@@ -258,7 +260,9 @@ def main() -> None:
         if pixi_lock.exists():
             connection.put(str(pixi_lock), remote=f"{staging_dir}/pixi.lock")
 
-        script = build_install_script(env_setup, staging_dir, args.verbose)
+        script = build_install_script(
+            env_setup, staging_dir, args.context, args.verbose
+        )
         with tempfile.NamedTemporaryFile("w", suffix=".sh") as local_script:
             local_script.write(script)
             local_script.flush()
