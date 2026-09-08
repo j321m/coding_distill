@@ -2,8 +2,27 @@
 authors = ["Janek <jan.malasnicki@gmail.com>"]
 channels = ["conda-forge"]
 name = "coding_distill"
-platforms = ["linux-64"]
 version = "0.1.0"
+
+platforms = [
+  { platform = "osx-arm64", macos = "14.0" },   # -> named "osx-arm64-macos-14-0"
+  "linux-64",
+  "linux-aarch64",
+]
+
+[feature.helios]
+platforms = ["linux-aarch64"]
+
+[feature.local]
+platforms = ["osx-arm64-macos-14-0", "linux-64"]
+
+[feature.entropy]
+platforms = ["linux-64"]
+
+[environments]
+default = { features = ["local", "launch"] }
+helios  = { features = ["cuda", "helios"] }
+entropy = { features = ["cuda", "entropy", "launch"] }
 
 [tasks]
 # repo-scoped mrunner: pixi run mrun --context entropy run configs/toy.py
@@ -18,13 +37,22 @@ python = "==3.12.3"
 [pypi-dependencies]
 # coding_distill = { path = ".", editable = true }
 black = "==25.1.0"
-# pin the CUDA build; PyPI's default torch varies in the CUDA it bundles
-torch = { version = "==2.13.0", index = "https://download.pytorch.org/whl/cu130" }
 transformers = "*"
 datasets = "*"
 accelerate = "*"
+
+[feature.launch.pypi-dependencies]
+# Couldn't install mrunner for linux-aarchh64
 mrunner = { git = "https://gitlab.com/awarelab/mrunner.git" }
 
+[feature.local.pypi-dependencies]
+torch = "==2.13.0"
+
+[feature.cuda.pypi-dependencies]
+# pin the CUDA build; PyPI's default torch varies in the CUDA it bundles
+torch = { version = "==2.13.0", index = "https://download.pytorch.org/whl/cu130" }
+
+[feature.entropy.pypi-dependencies]
 # torch's CUDA deps, redeclared only to fetch them off PyPI, which entropy
 # reaches at ~1 MB/s -- the pytorch index serves the same wheels 50x faster
 nvidia-cublas = { version = "*", index = "https://download.pytorch.org/whl/cu130" }
