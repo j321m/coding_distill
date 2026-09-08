@@ -20,9 +20,9 @@ platforms = ["osx-arm64-macos-14-0", "linux-64"]
 platforms = ["linux-64"]
 
 [environments]
-default = { features = ["local", "launch"] }
+default = { features = ["local"] }
 helios  = { features = ["cuda", "helios"] }
-entropy = { features = ["cuda", "entropy", "launch"] }
+entropy = { features = ["cuda", "entropy"] }
 
 [tasks]
 # repo-scoped mrunner: pixi run mrun --context entropy run configs/toy.py
@@ -40,9 +40,6 @@ black = "==25.1.0"
 transformers = "*"
 datasets = "*"
 accelerate = "*"
-
-[feature.launch.pypi-dependencies]
-# Couldn't install mrunner for linux-aarchh64
 mrunner = { git = "https://gitlab.com/awarelab/mrunner.git" }
 
 [feature.local.pypi-dependencies]
