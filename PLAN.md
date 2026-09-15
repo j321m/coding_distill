@@ -151,14 +151,14 @@ src/model.py      DELETE now, re-create for custom architectures
 - `heavy_metrics_calculation_interval` — gate expensive metrics only.
 - **Secrets**: forward `WANDB_API_KEY`/`HF_TOKEN` via `Experiment(env=...)`, never
   hardcoded. nano substitutes placeholders at submit time
-  (`resolver/__init__.py`, `run_exp.py:411`).
+  (`resolver/__init__.py`, `run_exp.py:411`). <-- for now kept manual login with populatin ~/.netrc file
 
 **Open:** `report_to="wandb"` vs own `wandb.init` + callback. Leaning: init
 ourselves, let HF attach.
 
 ---
 
-## 7. Self-describing run dirs
+## 7. Self-describing run dirs -- SOLVED
 
 - `args.json` into the output dir **at startup**, not at the end.
 - Attach config to the wandb run (`nano/main.py:upload_config_file`).

@@ -1,45 +1,8 @@
-from munch import Munch
-from mrunner.cli.mrunner_cli import register_after_run_callback
-from mrunner.experiment import Experiment
+from configs.common import make_experiment
 
-
-def _print_log_location(sweep, experiments):
-    """Called by mrunner right after the job is submitted."""
-    log = f"{sweep.grid_logs_dir}/slurm_"
-    log += "0.log" if len(experiments) == 1 else "<array_task_id>.log"
-    print(f"\nlog: ssh {sweep.slurm_url} tail -f {log}")
-
-
-register_after_run_callback(_print_log_location)
-
-# mrunner tars up everything in the cwd that is not listed here. Note that
-# providing `exclude` REPLACES mrunner's default of [.git, .gitignore,
-# .gitmodules], so those have to be repeated.
-#
-# The pixi bits are excluded on purpose: `.pixi` is a local, platform-specific
-# env with a huge file count, and the manifest is kept out so nothing on the
-# cluster can accidentally materialize an env inside the copied repo (home has a
-# file-count quota). The remote env lives at $PIXI_HOME and is activated by
-# `prolog_cmd` in clusters.yaml -- see update_pixi.py.
-EXCLUDE = [
-    ".git",
-    ".gitignore",
-    ".gitmodules",
-    ".pixi",
-    "pixi.toml",
-    "pixi.lock",
-    ".vscode",
-    "__pycache__",
-    "out",
-]
-
-experiment = Experiment(
-    name="toy_exp",
-    # plain `python`, not `pixi run` -- prolog_cmd already activated $PIXI_HOME
-    script="python main.py",
-    exclude=EXCLUDE,
-    # flat so mrunner can sweep them; main.py nests by prefix
-    parameters=Munch(
+experiment = make_experiment(
+    "toy_exp",
+    dict(
         model_name="HuggingFaceTB/SmolLM2-135M",
         model_pad_token="<|endoftext|>",
         data_name="roneneldan/TinyStories",
@@ -51,7 +14,7 @@ experiment = Experiment(
         data_truncation=True,
         # Checkpoints go to cluster storage, not to the mrunner-copied repo. The
         # path is context-specific, so it comes from $RUNS_DIR in prolog_cmd and
-        # is expanded on the compute node -- see trainer.py:resolve_output_dir.
+        # is expanded on the compute node -- see src/run_dir.py.
         train_output_dir="$RUNS_DIR",
         train_learning_rate=3e-4,
         train_batch_size=8,
