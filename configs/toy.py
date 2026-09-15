@@ -49,10 +49,10 @@ experiment = Experiment(
         data_max_length=512,
         data_padding="max_length",
         data_truncation=True,
-        # Checkpoints go to the NVMe, not to the mrunner-copied repo (which is
-        # on $HOME). Only reachable from a compute node, so it is resolved at
-        # runtime -- $USER is expanded and the job id appended, see trainer.py.
-        train_output_dir="/storage_nvme_4/coding_distill/$USER/runs",
+        # Checkpoints go to cluster storage, not to the mrunner-copied repo. The
+        # path is context-specific, so it comes from $RUNS_DIR in prolog_cmd and
+        # is expanded on the compute node -- see trainer.py:resolve_output_dir.
+        train_output_dir="$RUNS_DIR",
         train_learning_rate=3e-4,
         train_batch_size=8,
         train_num_epochs=1,
@@ -60,6 +60,7 @@ experiment = Experiment(
         train_logging_steps=10,
         train_save_steps=500,
         train_bf16=True,
+        train_report_to="wandb",
     ),
 )
 

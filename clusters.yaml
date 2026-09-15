@@ -31,6 +31,11 @@ contexts:
       export UV_CACHE_DIR="$XDG_CACHE_HOME/uv"
       export PIXI_CACHE_DIR="$XDG_CACHE_HOME/pixi"
 
+      export RUNS_DIR=...
+      export WANDB_DIR=...
+      export WANDB_ARTIFACT_DIR=...
+      export XDG_CONFIG_HOME=...
+
       # activate the out-of-tree env
       eval "$(pixi shell-hook --manifest-path "$PIXI_HOME/pixi.toml")"
 
@@ -48,22 +53,28 @@ contexts:
       - "--gres=gpu:1"
       - "--cpus-per-task=72"
       - "--mem=120G"
-      - "--time=2-00:00:00"
+      - "--time=0-00:30:00"
 
     prolog_cmd: |
       export USER_STORAGE=/net/storage/pr3/plgrid/plggideascv/plgwm5
       export PROJECT_HOME_PATH=/net/storage/pr3/plgrid/plggideascv/plgwm5/coding_distill
+      export RUNS_DIR=$PROJECT_HOME_PATH/runs
       export HF_HOME=$PROJECT_HOME_PATH/hf_cache
 
       # pixi env lives outside of $HOME, together with its caches
-      export PIXI_HOME=$PROJECT_HOME_PATH/$USER/pixi
+      export PIXI_HOME=$PROJECT_HOME_PATH/pixi
       export PATH="$USER_STORAGE/.pixi/bin:$PATH"
       export XDG_DATA_HOME="$PIXI_HOME/data"
       export XDG_CACHE_HOME="$PIXI_HOME/cache"
       export XDG_STATE_HOME="$PIXI_HOME/state"
+      export XDG_CONFIG_HOME="$PIXI_HOME/config"
       export RATTLER_CACHE_DIR="$XDG_CACHE_HOME/rattler"
       export UV_CACHE_DIR="$XDG_CACHE_HOME/uv"
       export PIXI_CACHE_DIR="$XDG_CACHE_HOME/pixi"
+      # wandb run dirs default to $PWD -- which is the mrunner code snapshot on
+      # $HOME. Runs land in $WANDB_DIR/wandb/run-*, caches follow XDG above.
+      export WANDB_DIR=$PROJECT_HOME_PATH
+      export WANDB_ARTIFACT_DIR=$PROJECT_HOME_PATH/wandb_artifacts
 
       # activate the out-of-tree env
       eval "$(pixi shell-hook -e helios --manifest-path "$PIXI_HOME/pixi.toml")"
