@@ -3,17 +3,11 @@
 pixi run debug
 """
 
-from munch import Munch
-from mrunner.experiment import Experiment
+from configs.common import make_experiment
 
-from configs.toy import EXCLUDE
-
-experiment = Experiment(
-    name="debug",
-    script="python main.py",
-    exclude=EXCLUDE,
-    # flat so mrunner can sweep them; main.py nests by prefix
-    parameters=Munch(
+experiment = make_experiment(
+    "debug",
+    dict(
         model_name="hf-internal-testing/tiny-random-LlamaForCausalLM",
         model_pad_token="<unk>",
         data_name="roneneldan/TinyStories",
