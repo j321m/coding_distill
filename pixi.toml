@@ -24,6 +24,10 @@ default = { features = ["local"] }
 helios  = { features = ["cuda", "helios"] }
 entropy = { features = ["cuda", "entropy"] }
 
+[activation.env]
+WANDB_ENTITY = "wmasarczyk_ideas"
+WANDB_PROJECT = "coding_distill"
+
 [tasks]
 # repo-scoped mrunner: pixi run mrun --context entropy run configs/toy.py
 mrun = "mrunner --config clusters.yaml"
@@ -40,6 +44,7 @@ black = "==25.1.0"
 transformers = "*"
 datasets = "*"
 accelerate = "*"
+wandb = "*"
 mrunner = { git = "https://gitlab.com/awarelab/mrunner.git" }
 
 [feature.local.pypi-dependencies]

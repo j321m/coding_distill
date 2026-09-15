@@ -24,6 +24,7 @@ def train(model, tokenizer, dataset, params):
         logging_steps=params.logging_steps,
         save_steps=params.save_steps,
         bf16=params.bf16,
+        report_to=params.get("report_to", "none")
     )
 
     trainer = Trainer(
