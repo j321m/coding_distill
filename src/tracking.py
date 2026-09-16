@@ -18,9 +18,17 @@ def init_wandb(metadata):
     import wandb  # ~1s to import; local runs never pay it
 
     run = wandb.init(
-        name=os.environ.get("SLURM_JOB_ID"),  # None locally -> wandb names it
         config={key: metadata[key] for key in ("params", "job", "git", "versions")},
     )
+
+    # Plot train/* against tokens consumed rather than wandb's _step, which only
+    # counts log() calls. Tokens is the axis on which two runs with different
+    # batch sizes or sequence lengths are comparable -- and once §9 makes
+    # sequence lengths ragged, step number stops meaning much at all. Must happen
+    # before the first log(); a metric already logged cannot be re-axed without
+    # re-running. `eval/*` gets the same treatment when §11 adds it.
+    wandb.define_metric("train/num_input_tokens_seen")
+    wandb.define_metric("train/*", step_metric="train/num_input_tokens_seen")
 
     output_dir = metadata["output_dir"]
     for name in ("args.json", metadata["git"]["patch"]):
