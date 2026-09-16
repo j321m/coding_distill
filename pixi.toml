@@ -30,7 +30,11 @@ WANDB_PROJECT = "coding_distill"
 
 [tasks]
 # repo-scoped mrunner: pixi run mrun --context entropy run configs/toy.py
-mrun = "mrunner --config clusters.yaml"
+# `python -m`, not the `mrunner` console script: mrunner exec()s the config file
+# (experiment.py:119) with no package context, and the console script puts its own
+# bin/ on sys.path -- `python -m` puts the cwd there instead, so `from
+# configs.common import ...` resolves.
+mrun = "python -m mrunner.cli.mrunner_cli --config clusters.yaml"
 # local CPU run, no backend involved
 debug = "python main.py --ex configs/debug.py"
 update-pixi = "python update_pixi.py"
