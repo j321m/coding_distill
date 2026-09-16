@@ -16,9 +16,6 @@ def train(model, tokenizer, dataset, params, output_dir):
         save_steps=params.save_steps,
         bf16=params.bf16,
         report_to=report_to,
-        # instrumentation, not hyperparameters: the token count is gathered
-        # across ranks and skips padding, and a NaN loss is the one datapoint
-        # that must reach the chart rather than be replaced by a recent average
         include_num_input_tokens_seen="non_padding",
         logging_nan_inf_filter=False,
     )
