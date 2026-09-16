@@ -1,8 +1,11 @@
 from transformers import Trainer, TrainingArguments
 
+from src.metrics import ThroughputCallback
+
 
 def train(model, tokenizer, dataset, params, output_dir):
     """`output_dir` is resolved and created by main.py -- see src/run_dir.py."""
+    report_to = params.get("report_to", "none")
     args = TrainingArguments(
         output_dir=output_dir,
         learning_rate=params.learning_rate,
@@ -12,7 +15,12 @@ def train(model, tokenizer, dataset, params, output_dir):
         logging_steps=params.logging_steps,
         save_steps=params.save_steps,
         bf16=params.bf16,
-        report_to=params.get("report_to", "none"),
+        report_to=report_to,
+        # instrumentation, not hyperparameters: the token count is gathered
+        # across ranks and skips padding, and a NaN loss is the one datapoint
+        # that must reach the chart rather than be replaced by a recent average
+        include_num_input_tokens_seen="non_padding",
+        logging_nan_inf_filter=False,
     )
 
     trainer = Trainer(
@@ -20,6 +28,7 @@ def train(model, tokenizer, dataset, params, output_dir):
         args=args,
         train_dataset=dataset,
         processing_class=tokenizer,
+        callbacks=[ThroughputCallback()] if "wandb" in report_to else [],
     )
     trainer.train()
     return trainer

@@ -151,7 +151,7 @@ src/model.py      DELETE now, re-create for custom architectures
 - `heavy_metrics_calculation_interval` — gate expensive metrics only.
 - **Secrets**: forward `WANDB_API_KEY`/`HF_TOKEN` via `Experiment(env=...)`, never
   hardcoded. nano substitutes placeholders at submit time
-  (`resolver/__init__.py`, `run_exp.py:411`). <-- for now kept manual login with populatin ~/.netrc file
+  (`resolver/__init__.py`, `run_exp.py:411`). >WM: for now kept manual login using ~/.netrc file
 
 **Open:** `report_to="wandb"` vs own `wandb.init` + callback. Leaning: init
 ourselves, let HF attach.
@@ -172,11 +172,11 @@ ourselves, let HF attach.
 Nothing is logged today. Copy `nano/src/core/trainer.py:386`:
 
 - Frozen `LossMetrics` dataclass: `total_loss` (backprop) vs `reported_loss`
-  (plain CE). The seam where an auxiliary term slots in later.
+  (plain CE). The seam where an auxiliary term slots in later. >WM: Skipped, no difference in our SFT-only setup
 - Per step: `train/loss`, `train/lr` (from `scheduler.get_last_lr()[0]`, not
-  config — catches scheduler bugs), `train/grad_norm`.
+  config — catches scheduler bugs), `train/grad_norm`. >WM: HF supports this out of box
 - `AveMetric(100, "100/train/loss")` — tail-averaged window, emitted once per 100
-  steps. `AveDiffMetric` gives step time the same way.
+  steps. `AveDiffMetric` gives step time the same way. >WM: Deferred
 - `processed_tokens += batch.numel() * WORLD_SIZE` -> `set_tokens()` for §6's
   token axis.
 
