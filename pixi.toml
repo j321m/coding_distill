@@ -37,6 +37,7 @@ WANDB_PROJECT = "coding_distill"
 mrun = "python -m mrunner.cli.mrunner_cli --config clusters.yaml"
 # local CPU run, no backend involved
 debug = "python main.py --ex configs/debug.py"
+tokenize-debug = "python -m scripts.tokenize_dataset --ex configs/tokenize_debug.py"
 update-pixi = "python update_pixi.py"
 
 [dependencies]

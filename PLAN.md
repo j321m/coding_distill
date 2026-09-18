@@ -167,7 +167,7 @@ ourselves, let HF attach.
 
 ---
 
-## 8. Train-loss + metric logging in the trainer
+## 8. Train-loss + metric logging in the trainer -- partially SOLVED
 
 Nothing is logged today. Copy `nano/src/core/trainer.py:386`:
 
@@ -186,7 +186,7 @@ tail-averaged windows, total-vs-reported split. Subclass `Trainer`, override
 
 ---
 
-## 9. CoT data pipeline — the actual work
+## 9. CoT data pipeline — the actual work -- SOLVED
 
 **Dataset: `open-r1/codeforces-cots`** (R1 traces on Codeforces problems). 11
 configs; start `solutions_decontaminated` (40.7k ex, 7.7GB) or

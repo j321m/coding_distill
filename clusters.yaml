@@ -32,6 +32,7 @@ contexts:
       export PIXI_CACHE_DIR="$XDG_CACHE_HOME/pixi"
 
       export RUNS_DIR=...
+      export DATA_DIR=...
       export WANDB_DIR=...
       export WANDB_ARTIFACT_DIR=...
       export XDG_CONFIG_HOME=...
@@ -59,6 +60,8 @@ contexts:
       export USER_STORAGE=/net/storage/pr3/plgrid/plggideascv/plgwm5
       export PROJECT_HOME_PATH=/net/storage/pr3/plgrid/plggideascv/plgwm5/coding_distill
       export RUNS_DIR=$PROJECT_HOME_PATH/runs
+      # pre-tokenized datasets, written by scripts/tokenize_dataset.py
+      export DATA_DIR=$PROJECT_HOME_PATH/data
       export HF_HOME=$PROJECT_HOME_PATH/hf_cache
 
       # pixi env lives outside of $HOME, together with its caches
