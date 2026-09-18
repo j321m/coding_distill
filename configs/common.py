@@ -64,19 +64,31 @@ def _git_info():
         return None, None, ""  # e.g. a config re-run from inside the snapshot
 
 
-def make_experiment(name, parameters, **kwargs):
+def data_params(tokenize_params, **extra):
+    """Prefix a tokenize config for main.py's `data_` nesting.
+
+    Training configs derive their data block from the same dict the tokenize job
+    used, so the two cannot drift; `build_dataset` still asserts it against the
+    artifact's meta.json.
+    """
+    return {f"data_{key}": value for key, value in {**tokenize_params, **extra}.items()}
+
+
+def make_experiment(name, parameters, script="python main.py", **kwargs):
     """Build an `Experiment` with the invariants filled in.
 
     `git_*` rides in `parameters` because the slurm backend ignores
     `Experiment.env` (only `backends/k8s.py` reads it), so the pickled parameters
     are the only channel to the job. `src/run_dir.py` lifts these keys back out
     into the `git` block of `args.json`, keeping them out of the hyperparameters.
+
+    `script` defaults to training; the tokenization job overrides it.
     """
     commit, dirty, diff = _git_info()
     return Experiment(
         name=name,
         # plain `python`, not `pixi run` -- prolog_cmd already activated $PIXI_HOME
-        script="python main.py",
+        script=script,
         exclude=EXCLUDE,
         # flat so mrunner can sweep them; main.py nests by prefix
         parameters=Munch(

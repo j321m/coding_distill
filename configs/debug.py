@@ -3,23 +3,19 @@
 pixi run debug
 """
 
-from configs.common import make_experiment
+from configs.common import data_params, make_experiment
+from configs.tokenize import TOKENIZE
 
 experiment = make_experiment(
     "debug",
     dict(
-        model_name="hf-internal-testing/tiny-random-LlamaForCausalLM",
-        model_pad_token="<unk>",
-        data_name="roneneldan/TinyStories",
-        data_config=None,
-        data_split="train[:64]",
-        data_text_field="text",
-        data_max_length=64,
-        data_padding="max_length",
-        data_truncation=True,
+        model_name=TOKENIZE["tokenizer"],
+        model_pad_token="<|endoftext|>",
+        # the artifact configs/tokenize_debug.py produced
+        **data_params(TOKENIZE, data_dir="out/data", filter_n=64),
         train_output_dir="out/debug",
         train_learning_rate=1e-4,
-        train_batch_size=4,
+        train_batch_size=1,
         train_num_epochs=1,
         train_max_steps=5,
         train_logging_steps=1,

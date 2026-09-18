@@ -1,4 +1,4 @@
-from transformers import Trainer, TrainingArguments
+from transformers import DataCollatorForSeq2Seq, Trainer, TrainingArguments
 
 from src.metrics import ThroughputCallback
 
@@ -18,6 +18,10 @@ def train(model, tokenizer, dataset, params, output_dir):
         report_to=report_to,
         include_num_input_tokens_seen="non_padding",
         logging_nan_inf_filter=False,
+        # Trainer prunes dataset columns by model.forward's signature before any
+        # transform runs, which would delete `prompt_len` before build_dataset's
+        # transform can read it. Column hygiene is the artifact's job instead.
+        remove_unused_columns=False,
     )
 
     trainer = Trainer(
@@ -25,6 +29,8 @@ def train(model, tokenizer, dataset, params, output_dir):
         args=args,
         train_dataset=dataset,
         processing_class=tokenizer,
+        # dynamic padding to the batch maximum; pads labels with -100
+        data_collator=DataCollatorForSeq2Seq(tokenizer),
         callbacks=[ThroughputCallback()] if "wandb" in report_to else [],
     )
     trainer.train()
