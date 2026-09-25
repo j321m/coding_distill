@@ -22,5 +22,5 @@ if "wandb" in params.train.get("report_to", "none"):
     init_wandb(metadata)
 
 model, tokenizer = build_model(params.model)
-dataset = build_dataset(params.data, tokenizer)
-train(model, tokenizer, dataset, params.train, output_dir)
+train_dataset, eval_dataset = build_dataset(params.data)
+train(model, tokenizer, train_dataset, eval_dataset, params.train, output_dir)
