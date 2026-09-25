@@ -57,7 +57,11 @@ def tokenize(messages):
         "the structural bound (max prompt + generation cap) no longer holds"
     )
     assert prompt_len < len(input_ids), "prompt covers the whole sample"
-    return {"input_ids": input_ids, "prompt_len": prompt_len, "length": len(input_ids)}
+    return {
+        "input_ids": input_ids,
+        "labels": [-100] * prompt_len + input_ids[prompt_len:],
+        "length": len(input_ids),
+    }
 
 
 dataset = dataset.map(
@@ -65,6 +69,19 @@ dataset = dataset.map(
     input_columns="messages",
     remove_columns=dataset.column_names,
     num_proc=params.num_proc,
+)
+# Arrow infers int64 for labels, doubling that column against int32 input_ids
+dataset = dataset.cast_column("labels", dataset.features["input_ids"])
+
+# A random split only holds because the `_py` subsets carry one completion per
+# problem. The C++ configs hold up to five traces each, so the same problem would
+# land on both sides and the eval loss would be measuring memorisation.
+assert "_py" in params.config, (
+    f"{params.config!r} has multiple traces per problem; a random split leaks "
+    "across train/eval. Split by problem id before using this config."
+)
+dataset = dataset.train_test_split(
+    test_size=params.test_size, seed=params.split_seed, shuffle=True
 )
 
 path = artifact_path(params)
@@ -75,6 +92,7 @@ dataset.save_to_disk(staging)
 # truncated one, which the loss curve would never reveal
 shutil.rmtree(path, ignore_errors=True)
 os.rename(staging, path)
-write_meta(path, params, len(dataset))
+rows = {split: len(subset) for split, subset in dataset.items()}
+write_meta(path, params, rows)
 
-print(f"wrote {len(dataset)} rows to {path}")
+print(f"wrote {rows} to {path}")
