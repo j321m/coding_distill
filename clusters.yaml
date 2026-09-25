@@ -46,6 +46,7 @@ contexts:
     # absolute + literal only: relative breaks the untar, $HOME/~ break the SFTP upload
     storage_dir: /net/storage/pr3/plgrid/plggideascv/plgwm5/coding_distill
     cmd_type: sbatch
+    time: "01:00:00"
 
     sbatch_options:
       - "--partition=plgrid-gpu-gh200"
@@ -54,7 +55,6 @@ contexts:
       - "--gres=gpu:1"
       - "--cpus-per-task=72"
       - "--mem=120G"
-      - "--time=0-00:30:00"
 
     prolog_cmd: |
       export USER_STORAGE=/net/storage/pr3/plgrid/plggideascv/plgwm5
@@ -74,6 +74,7 @@ contexts:
       export RATTLER_CACHE_DIR="$XDG_CACHE_HOME/rattler"
       export UV_CACHE_DIR="$XDG_CACHE_HOME/uv"
       export PIXI_CACHE_DIR="$XDG_CACHE_HOME/pixi"
+      export TRITON_CACHE_DIR=$XDG_CACHE_HOME/triton
       # wandb run dirs default to $PWD -- which is the mrunner code snapshot on
       # $HOME. Runs land in $WANDB_DIR/wandb/run-*, caches follow XDG above.
       export WANDB_DIR=$PROJECT_HOME_PATH
