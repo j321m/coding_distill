@@ -7,7 +7,7 @@ what to add before the distillation work starts.
 i.e. offline SFT. No teacher in the loop, no KL-on-logits. The work is mostly in
 the **data pipeline** (§9), not a custom loss.
 
-**Sections are in implementation order.** §1–§2 are done; start at §3.
+**Sections are in implementation order.** §1–§3 are done; start at §4.
 
 ## Reference repos
 
@@ -63,9 +63,9 @@ Recorded, not doing now:
 
 ---
 
-## 3. Structured stdout — in Python, not `export`
+## 3. Structured stdout — DONE
 
-Adopt `logging` as in `nano/main.py:29`:
+`logging` as in `nano/main.py:29`, set up in `main.py`:
 
 ```python
 logging.Formatter(fmt=f"[%(levelname)s][host:{platform.node()}]"
@@ -74,14 +74,11 @@ logging.Formatter(fmt=f"[%(levelname)s][host:{platform.node()}]"
 
 `StreamHandler.emit()` flushes per record, so slurm buffering is solved as a side
 effect — no `flush=True`, no env var. Host + local_rank in the formatter is what
-makes a 4-GPU log readable. Optionally `sys.stdout.reconfigure(line_buffering=True)`
-in `main.py` for third-party prints.
+makes a 4-GPU log readable. `sys.stdout.reconfigure(line_buffering=True)` covers
+third-party prints (HF's metric dicts). `httpx` is set to WARNING — root at INFO
+otherwise logs every HF hub request. `transformers` keeps its own handler/format.
 
-MFU: a flush is a `write()` syscall, µs against steps of 10-100ms — under 0.01%
-even at `logging_steps=1`. The `.item()` device sync is the real cost and HF pays
-it at every logging step anyway. Gate expensive *metrics* (§6), not cheap prints.
-
-Print derived config values at startup.
+Startup logs the full params and the resolved `output_dir`.
 
 ---
 

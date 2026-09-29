@@ -1,6 +1,9 @@
+import logging
 import os
 
 from transformers import Trainer, TrainingArguments
+
+logger = logging.getLogger(__name__)
 
 
 def resolve_output_dir(output_dir):
@@ -13,7 +16,7 @@ def resolve_output_dir(output_dir):
 
 def train(model, tokenizer, dataset, params):
     output_dir = resolve_output_dir(params.output_dir)
-    print(f"output_dir: {output_dir}")
+    logger.info(f"output_dir: {output_dir}")
 
     args = TrainingArguments(
         output_dir=output_dir,
