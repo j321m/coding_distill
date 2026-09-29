@@ -7,7 +7,7 @@ what to add before the distillation work starts.
 i.e. offline SFT. No teacher in the loop, no KL-on-logits. The work is mostly in
 the **data pipeline** (§9), not a custom loss.
 
-**Sections are in implementation order.** §1 is done; start at §2.
+**Sections are in implementation order.** §1–§2 are done; start at §3.
 
 ## Reference repos
 
@@ -49,9 +49,7 @@ cwd (`backends/slurm.py:82`).
 
 ### Cadence: linear for now
 
-### Cadence: linear for now
-
-`save_steps` + `save_total_limit`. No callback yet. Grow into
+`save_steps`. No callback yet. Grow into
 `nano/src/core/trainer.py:149` when needed — `interval_match or step_match`, i.e.
 uniform interval **or** an explicit step list, so log-spacing later is a config
 list, not new code. Their `_should_save_final_checkpoint` also avoids a duplicate
