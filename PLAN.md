@@ -82,36 +82,19 @@ Startup logs the full params and the resolved `output_dir`.
 
 ---
 
-## 4. tyro + mrunner — SOLVED, copy plan-crl
+## 4. tyro + mrunner — IN PROGRESS
 
-Both live together via a subprocess shim. mrunner never sees tyro's flags.
+Shim from plan-crl: `mrunner_run.py` turns mrunner's flat dict into
+`python -m main --train.lr 3e-4 ...`. Dotted keys, no field defaults.
 
-`plan-crl/mrunner_run.py` (30 lines) — the whole trick:
-- `get_configuration()` -> flat dict
-- pops `entry_point` (selects which training script; one shim, many scripts)
-- flat dict -> CLI flags: `bool` -> `--flag` / `--no-flag`, `list` -> `--k a b c`,
-  else `--k v`
-- `subprocess.run([sys.executable, "-m", entry_point] + flags)`
+- [ ] minimal: `src/config.py`, `tyro.cli` in `main.py`, shim, dotted keys in configs
+- [ ] test: `pixi run debug`, `--help`, missing key errors, toy on entropy
+- [ ] extend: docstrings, `create_experiments_helper` + `.mrunnerignore`
 
-Config keys are **dotted** — `"llm_actor.engine_args.model_id"` -> `--llm_actor.engine_args.model_id`
--> tyro's nested-dataclass syntax. Arbitrarily nested typed config, still flat for
-mrunner sweeps.
-
-Also copy:
-- `plan-crl/mrunner_run_local.py` — runs a spec locally through the same shim, no
-  code upload, `--job-index N` for one job of a grid. Same code path local and
-  remote; replaces our `pixi run debug`.
-- `.mrunnerignore` file instead of the inline `EXCLUDE` list in `configs/toy.py`.
-- `create_experiments_helper(base_config=..., params_grid=...)` instead of
-  hand-built `Experiment`.
-- Field docstrings in the dataclasses — tyro renders them in `--help`
-  (`plan-crl/plan_crl/config/args.py`, 620 lines, good model).
-
-Add `tyro` to `pixi.toml`. Must switch cleanly between the debug model and the
-7B student (§10).
-
-**Open:** keep `nesting_prefixes` or move to dotted keys? Dotted is what makes
-tyro nesting work — probably drop the prefix scheme.
+Watch:
+- required bools parse as `--x True`, not `--no-x`
+- `None` arrives as `"None"` — field must be `Optional`
+- `.mrunnerignore` scan walks into `.pixi` — slow submit
 
 ---
 
