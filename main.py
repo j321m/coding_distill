@@ -3,8 +3,9 @@ import os
 import platform
 import sys
 
-from mrunner.helpers.client_helper import get_configuration
+import tyro
 
+from src.config import Args
 from src.data import build_dataset
 from src.model import build_model
 from src.trainer import train
@@ -21,8 +22,7 @@ logging.basicConfig(
 logging.getLogger("httpx").setLevel(logging.WARNING)
 logger = logging.getLogger(__name__)
 
-# model_name -> params.model.name
-params = get_configuration(nesting_prefixes=("model_", "data_", "train_"))
+params = tyro.cli(Args)
 logger.info(f"params: {params}")
 
 model, tokenizer = build_model(params.model)

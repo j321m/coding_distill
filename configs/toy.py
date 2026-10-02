@@ -36,30 +36,32 @@ EXCLUDE = [
 experiment = Experiment(
     name="toy_exp",
     # plain `python`, not `pixi run` -- prolog_cmd already activated $PIXI_HOME
-    script="python main.py",
+    script="python mrunner_run.py",
     exclude=EXCLUDE,
-    # flat so mrunner can sweep them; main.py nests by prefix
+    # flat so mrunner can sweep them; dotted keys -> tyro nesting (src/config.py)
     parameters=Munch(
-        model_name="HuggingFaceTB/SmolLM2-135M",
-        model_pad_token="<|endoftext|>",
-        data_name="roneneldan/TinyStories",
-        data_config=None,
-        data_split="train[:1%]",
-        data_text_field="text",
-        data_max_length=512,
-        data_padding="max_length",
-        data_truncation=True,
-        # Checkpoints go to the NVMe, not to the mrunner-copied repo (which is
-        # on $HOME). Only reachable from a compute node, so it is resolved at
-        # runtime -- $USER is expanded and the job id appended, see trainer.py.
-        train_output_dir="/storage_nvme_4/coding_distill/$USER/runs",
-        train_learning_rate=3e-4,
-        train_batch_size=8,
-        train_num_epochs=1,
-        train_max_steps=100,
-        train_logging_steps=10,
-        train_save_steps=500,
-        train_bf16=True,
+        {
+            "model.name": "HuggingFaceTB/SmolLM2-135M",
+            "model.pad_token": "<|endoftext|>",
+            "data.name": "roneneldan/TinyStories",
+            "data.config": None,
+            "data.split": "train[:1%]",
+            "data.text_field": "text",
+            "data.max_length": 512,
+            "data.padding": "max_length",
+            "data.truncation": True,
+            # Checkpoints go to the NVMe, not to the mrunner-copied repo (which is
+            # on $HOME). Only reachable from a compute node, so it is resolved at
+            # runtime -- $USER is expanded and the job id appended, see trainer.py.
+            "train.output_dir": "/storage_nvme_4/coding_distill/$USER/runs",
+            "train.learning_rate": 3e-4,
+            "train.batch_size": 8,
+            "train.num_epochs": 1,
+            "train.max_steps": 100,
+            "train.logging_steps": 10,
+            "train.save_steps": 500,
+            "train.bf16": True,
+        }
     ),
 )
 

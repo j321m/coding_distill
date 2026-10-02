@@ -87,8 +87,9 @@ Startup logs the full params and the resolved `output_dir`.
 Shim from plan-crl: `mrunner_run.py` turns mrunner's flat dict into
 `python -m main --train.lr 3e-4 ...`. Dotted keys, no field defaults.
 
-- [ ] minimal: `src/config.py`, `tyro.cli` in `main.py`, shim, dotted keys in configs
-- [ ] test: `pixi run debug`, `--help`, missing key errors, toy on entropy
+- [x] minimal: `src/config.py`, `tyro.cli` in `main.py`, shim, dotted keys in configs
+- [x] test local: `pixi run debug`, `--help`, missing key errors
+- [ ] test: toy on entropy
 - [ ] extend: docstrings, `create_experiments_helper` + `.mrunnerignore`
 
 Watch:

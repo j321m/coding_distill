@@ -9,7 +9,7 @@ version = "0.1.0"
 # repo-scoped mrunner: pixi run mrun --context entropy run configs/toy.py
 mrun = "mrunner --config clusters.yaml"
 # local CPU run, no backend involved
-debug = "python main.py --ex configs/debug.py"
+debug = "python mrunner_run.py --ex configs/debug.py"
 update-pixi = "python update_pixi.py"
 
 [dependencies]
@@ -23,6 +23,7 @@ torch = { version = "==2.13.0", index = "https://download.pytorch.org/whl/cu130"
 transformers = "*"
 datasets = "*"
 accelerate = "*"
+tyro = "*"
 mrunner = { git = "https://gitlab.com/awarelab/mrunner.git" }
 
 # torch's CUDA deps, redeclared only to fetch them off PyPI, which entropy
