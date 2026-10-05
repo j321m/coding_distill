@@ -90,12 +90,22 @@ Shim from plan-crl: `mrunner_run.py` turns mrunner's flat dict into
 - [x] minimal: `src/config.py`, `tyro.cli` in `main.py`, shim, dotted keys in configs
 - [x] test local: `pixi run debug`, `--help`, missing key errors
 - [ ] test: toy on entropy
-- [ ] extend: docstrings, `create_experiments_helper` + `.mrunnerignore`
+- [x] extend: docstrings, `create_experiments_helper` + `EXCLUDE` list
+- [x] spec cemetery: after a successful submit, the spec is copied to
+  `configs/cemetery/<YYYY_MM_DD_HHMM>_<spec>.py`; the experiment name carries the
+  same stamp (`stamped()`). Commit the cemetery.
+- [ ] test on entropy: cemetery file appears, name shows up stamped in the slurm dir
 
 Watch:
+- `configs/` holds specs only, plus `configs/_helper_functions.py` for generic
+  submit-side code — importable because the `mrun` task sets `PYTHONPATH`
+  (bare `mrunner` fails)
 - required bools parse as `--x True`, not `--no-x`
 - `None` arrives as `"None"` — field must be `Optional`
-- `.mrunnerignore` scan walks into `.pixi` — slow submit
+- upload excludes are a plain `EXCLUDE` list in `_helper_functions.py`; mrunner's
+  `mrunner_ignore=` walks into `.pixi`, don't use it
+- `with_neptune=False` is required — the helper defaults to a neptune logger
+- mrunner pinned to `c6be9e4` in `pixi.toml`; bump deliberately
 
 ---
 

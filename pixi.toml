@@ -7,7 +7,9 @@ version = "0.1.0"
 
 [tasks]
 # repo-scoped mrunner: pixi run mrun --context entropy run configs/toy.py
-mrun = "mrunner --config clusters.yaml"
+# PYTHONPATH: mrunner is a console script, so specs can't otherwise import
+# configs._helper_functions from the repo root
+mrun = { cmd = "mrunner --config clusters.yaml", env = { PYTHONPATH = "$PIXI_PROJECT_ROOT" } }
 # local CPU run, no backend involved
 debug = "python mrunner_run.py --ex configs/debug.py"
 update-pixi = "python update_pixi.py"
@@ -24,7 +26,8 @@ transformers = "*"
 datasets = "*"
 accelerate = "*"
 tyro = "*"
-mrunner = { git = "https://gitlab.com/awarelab/mrunner.git" }
+# pinned; bump deliberately
+mrunner = { git = "https://gitlab.com/awarelab/mrunner.git", rev = "c6be9e48d2d4dea7b71d33bc743254f49c876c11" }
 
 # torch's CUDA deps, redeclared only to fetch them off PyPI, which entropy
 # reaches at ~1 MB/s -- the pytorch index serves the same wheels 50x faster
