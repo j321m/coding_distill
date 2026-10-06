@@ -4,7 +4,7 @@ here. Runs on the submitting machine only, never on the cluster.
 Importing this registers the after-submit callbacks. A spec uses:
 
     from mrunner.helpers.specification_helper import create_experiments_helper
-    from configs._helper_functions import HELPER_KWARGS, stamped
+    from configs._helper_functions import HELPER_KWARGS
 
 The repo root is on sys.path via the `mrun` task's PYTHONPATH (pixi.toml) --
 mrunner exec()s specs from a console script, so the cwd isn't there by default.
@@ -12,13 +12,10 @@ mrunner exec()s specs from a console script, so the cwd isn't there by default.
 
 import shutil
 import sys
-from datetime import datetime
 from pathlib import Path
 
 from mrunner.cli.mrunner_cli import register_after_run_callback
 
-# Taken once per submit, shared by the experiment name and the cemetery file
-STAMP = datetime.now().strftime("%Y_%m_%d_%H%M")
 CEMETERY = Path("configs/cemetery")
 
 # Paths mrunner does NOT upload; the helper appends .git/.gitignore/.gitmodules.
@@ -49,24 +46,20 @@ HELPER_KWARGS = dict(
 )
 
 
-def stamped(name):
-    return f"{STAMP}_{name}"
-
-
 def _print_log_location(sweep, experiments):
     """Called by mrunner right after the job is submitted."""
     log = f"{sweep.grid_logs_dir}/slurm_"
     log += "0.log" if len(experiments) == 1 else "<array_task_id>.log"
-    print(f"\nlog: ssh {sweep.slurm_url} tail -f {log}")
+    print(f"\nlog:\nssh {sweep.slurm_url} tail -f {log}")
 
 
-def _bury_spec(_sweep, _experiments):
+def _bury_spec(sweep, _experiments):
     """Copy the spec just submitted (e.g. configs/toy.py) to
-    configs/cemetery/<STAMP>_toy.py.
+    configs/cemetery/<run dir name>.py, e.g. 261005-1243-toy_exp-sreh.py.
     """
     spec = Path(sys.argv[sys.argv.index("run") + 1])
     CEMETERY.mkdir(parents=True, exist_ok=True)
-    dst = CEMETERY / f"{STAMP}_{spec.stem}.py"
+    dst = CEMETERY / f"{sweep.unique_name}.py"
     shutil.copy(spec, dst)
     print(f"spec: {dst}")
 

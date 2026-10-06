@@ -5,10 +5,10 @@ pixi run debug
 
 from mrunner.helpers.specification_helper import create_experiments_helper
 
-from configs._helper_functions import HELPER_KWARGS, stamped
+from configs._helper_functions import HELPER_KWARGS
 
 experiments_list = create_experiments_helper(
-    experiment_name=stamped("debug"),
+    experiment_name="debug",
     **HELPER_KWARGS,
     # flat so mrunner can sweep them; dotted keys -> tyro nesting (src/config.py)
     base_config={

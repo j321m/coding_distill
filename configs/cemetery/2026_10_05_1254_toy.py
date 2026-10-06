@@ -1,9 +1,9 @@
 from mrunner.helpers.specification_helper import create_experiments_helper
 
-from configs._helper_functions import HELPER_KWARGS
+from configs._helper_functions import HELPER_KWARGS, stamped
 
 experiments_list = create_experiments_helper(
-    experiment_name="toy_exp",
+    experiment_name=stamped("toy_exp"),
     **HELPER_KWARGS,
     # flat so mrunner can sweep them; dotted keys -> tyro nesting (src/config.py)
     base_config={

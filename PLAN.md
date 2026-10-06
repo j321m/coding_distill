@@ -13,14 +13,14 @@ Reference: plan-crl (local) — same stack (tyro + mrunner), same problem; nano
   resolved at runtime (`src/trainer.py:resolve_output_dir`)
 - structured stdout logging with host + local_rank (`main.py`)
 - tyro config (`src/config.py`) + mrunner shim (`mrunner_run.py`), specs in
-  `configs/`, cemetery + stamped names (`configs/_helper_functions.py`)
+  `configs/`, cemetery named after the run dir (`configs/_helper_functions.py`)
 
 ---
 
 ## 1. tyro + mrunner — finish on entropy
 
-- [ ] `pixi run mrun --context entropy run configs/toy.py` trains
-- [ ] `configs/cemetery/<stamp>_toy.py` appears; slurm dir carries the same stamp
+- [x] `pixi run mrun --context entropy run configs/toy.py` trains
+- [x] `configs/cemetery/<run dir name>.py` appears
 
 Watch:
 - required bools parse as `--x True`; `None` arrives as `"None"` -> field `Optional`
