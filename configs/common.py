@@ -21,15 +21,6 @@ def _print_log_location(sweep, experiments):
 
 register_after_run_callback(_print_log_location)
 
-# mrunner tars up everything in the cwd that is not listed here. Note that
-# providing `exclude` REPLACES mrunner's default of [.git, .gitignore,
-# .gitmodules], so those have to be repeated.
-#
-# The pixi bits are excluded on purpose: `.pixi` is a local, platform-specific
-# env with a huge file count, and the manifest is kept out so nothing on the
-# cluster can accidentally materialize an env inside the copied repo (home has a
-# file-count quota). The remote env lives at $PIXI_HOME and is activated by
-# `prolog_cmd` in clusters.yaml -- see update_pixi.py.
 EXCLUDE = [
     ".git",
     ".gitignore",
@@ -40,6 +31,7 @@ EXCLUDE = [
     ".vscode",
     "__pycache__",
     "out",
+    "assets",
 ]
 
 
