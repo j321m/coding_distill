@@ -21,24 +21,26 @@ platforms = ["linux-64"]
 
 [environments]
 default = { features = ["local"] }
-helios  = { features = ["cuda", "helios"] }
-entropy = { features = ["cuda", "entropy"] }
+helios  = { features = ["train", "helios"] }
+entropy = { features = ["train", "entropy"] }
+helios-eval = { features = ["eval", "helios"] }
 
 [activation.env]
 WANDB_ENTITY = "wmasarczyk_ideas"
 WANDB_PROJECT = "coding_distill"
 
 [tasks]
-# repo-scoped mrunner: pixi run mrun --context entropy run configs/toy.py
-# `python -m`, not the `mrunner` console script: mrunner exec()s the config file
-# (experiment.py:119) with no package context, and the console script puts its own
-# bin/ on sys.path -- `python -m` puts the cwd there instead, so `from
-# configs.common import ...` resolves.
-mrun = "python -m mrunner.cli.mrunner_cli --config clusters.yaml"
 # local CPU run, no backend involved
 debug = "python main.py --ex configs/debug.py"
 tokenize-debug = "python -m scripts.tokenize_dataset --ex configs/tokenize_debug.py"
 update-pixi = "python update_pixi.py"
+[tasks.mrun]
+# repo-scoped mrunner: pixi run mrun --context entropy run configs/toy.py
+# PYTHONPATH, not `python -m`: mrunner exec()s the config file with no package
+# context, and the console script puts its own bin/ on sys.path, so
+# `from configs.common import ...` needs the cwd added.
+cmd = "mrunner --config clusters.yaml"
+env = { PYTHONPATH = "." }
 
 [dependencies]
 python = "==3.12.3"
@@ -55,9 +57,23 @@ mrunner = { git = "https://gitlab.com/awarelab/mrunner.git" }
 [feature.local.pypi-dependencies]
 torch = "==2.13.0"
 
-[feature.cuda.pypi-dependencies]
-# pin the CUDA build; PyPI's default torch varies in the CUDA it bundles
+[feature.train.pypi-dependencies]
+liger-kernel = "==0.8.4"
+transformers = "==5.18.0"  # scoped here: feature.eval needs <5 for vllm
+triton = "==3.7.1"  # the kernels Liger compiles into
 torch = { version = "==2.13.0", index = "https://download.pytorch.org/whl/cu130" }
+
+
+[feature.eval.pypi-dependencies]
+vllm = "==0.10.2"  # oldest release with an aarch64 wheel; wants torch 2.8.0
+# PyPI's aarch64 torch is CPU-only (its nvidia-* deps are gated on x86_64)
+torch = { version = "==2.8.0", index = "https://download.pytorch.org/whl/cu129" }
+# torch 2.8 requires triton 3.4.0, whose aarch64 wheel is only on this index
+triton = { version = "*", index = "https://download.pytorch.org/whl/cu129" }
+transformers = "<5"  # vllm 0.10.2 predates the 5.x API
+datasets = "<4"  # 4.0 dropped loading scripts; code_generation_lite is one
+anthropic = "<1"  # lcb_runner.prompts imports HUMAN_PROMPT/AI_PROMPT at module scope
+pebble = "*"  # lcb_runner.evaluation's process pool
 
 [feature.entropy.pypi-dependencies]
 # torch's CUDA deps, redeclared only to fetch them off PyPI, which entropy
