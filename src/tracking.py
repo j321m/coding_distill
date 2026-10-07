@@ -11,11 +11,12 @@ def init_wandb(metadata):
 
     `wandb.init` takes no entity/project: both come from `WANDB_ENTITY` /
     `WANDB_PROJECT` in `[activation.env]` (pixi.toml), which reach the job
-    through the `pixi shell-hook` in prolog_cmd. One definition for local,
-    and remote machines, so they cannot disagree; to point a run elsewhere, change
-    them there or export them in the shell before submitting.
+    through the `pixi shell-hook` in prolog_cmd.
     """
-    import wandb  # ~1s to import; local runs never pay it
+    if os.environ.get("RANK", "0") != "0":
+        return None
+
+    import wandb
 
     run = wandb.init(
         config={key: metadata[key] for key in ("params", "job", "git", "versions")},
@@ -26,7 +27,5 @@ def init_wandb(metadata):
     output_dir = metadata["output_dir"]
     for name in ("args.json", metadata["git"]["patch"]):
         if name and os.path.exists(os.path.join(output_dir, name)):
-            # base_path: these live under $RUNS_DIR, outside the wandb run dir.
-            # policy="now": written once at startup, never touched again.
             run.save(os.path.join(output_dir, name), base_path=output_dir, policy="now")
     return run

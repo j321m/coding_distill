@@ -34,7 +34,15 @@ JOB_ENV_KEYS = (
     "HF_HOME",
 )
 
-VERSIONED_PACKAGES = ("torch", "transformers", "datasets", "accelerate", "wandb")
+VERSIONED_PACKAGES = (
+    "torch",
+    "transformers",
+    "datasets",
+    "accelerate",
+    "wandb",
+    "liger-kernel",
+    "triton",
+)
 
 PATCH_FILE = "git.patch"
 
@@ -72,6 +80,7 @@ def write_run_metadata(output_dir, params):
     Called before the model and the dataset are built: a run that dies while
     loading is precisely the one whose config you want to read afterwards.
     """
+    is_rank_zero = os.environ.get("RANK", "0") == "0"
     recorded = unmunchify(params)
     # configs/common.py injects these into the parameters because the slurm
     # backend has no other channel to the job. Lift them back out: provenance is
@@ -79,7 +88,7 @@ def write_run_metadata(output_dir, params):
     commit = recorded.pop("git_commit", None)
     dirty = recorded.pop("git_dirty", None)
     diff = recorded.pop("git_diff", None)
-    if diff:
+    if diff and is_rank_zero:
         with open(os.path.join(output_dir, PATCH_FILE), "w") as patch:
             patch.write(diff)
 
@@ -99,6 +108,7 @@ def write_run_metadata(output_dir, params):
         "versions": _versions(),
     }
 
-    with open(os.path.join(output_dir, "args.json"), "w") as args_file:
-        json.dump(metadata, args_file, indent=2, default=str)
+    if is_rank_zero:
+        with open(os.path.join(output_dir, "args.json"), "w") as args_file:
+            json.dump(metadata, args_file, indent=2, default=str)
     return metadata
