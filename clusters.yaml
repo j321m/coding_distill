@@ -46,15 +46,16 @@ contexts:
     # absolute + literal only: relative breaks the untar, $HOME/~ break the SFTP upload
     storage_dir: /net/storage/pr3/plgrid/plggideascv/plgwm5/coding_distill
     cmd_type: sbatch
-    time: "01:00:00"
+    time: "20:00:00"
 
     sbatch_options:
       - "--partition=plgrid-gpu-gh200"
       - "--account=plgideascvgroup1-gpu-gh200"
       - "--nodes=1"
-      - "--gres=gpu:1"
+      - "--gres=gpu:4"
+      - "--ntasks=1"
       - "--cpus-per-task=72"
-      - "--mem=120G"
+      - "--mem=200G"
 
     prolog_cmd: |
       export USER_STORAGE=/net/storage/pr3/plgrid/plggideascv/plgwm5
@@ -82,6 +83,47 @@ contexts:
 
       # activate the out-of-tree env
       eval "$(pixi shell-hook -e helios --manifest-path "$PIXI_HOME/pixi.toml")"
+
+  # LiveCodeBench runs against a 2024-era torch/vllm stack that cannot share an
+  # env with the cu130 training build, so it gets its own. Identical to `helios`
+  # apart from the environment it activates; the name must match the pixi
+  # environment, because update_pixi.py installs `-e <context>`.
+  helios-eval:
+    backend_type: slurm
+    slurm_url: helios
+    storage_dir: /net/storage/pr3/plgrid/plggideascv/plgwm5/coding_distill
+    cmd_type: sbatch
+    time: "01:30:00"
+
+    sbatch_options:
+      - "--partition=plgrid-gpu-gh200"
+      - "--account=plgideascvgroup1-gpu-gh200"
+      - "--nodes=1"
+      - "--gres=gpu:1"
+      - "--cpus-per-task=72"
+      - "--mem=120G"
+
+    prolog_cmd: |
+      export USER_STORAGE=/net/storage/pr3/plgrid/plggideascv/plgwm5
+      export PROJECT_HOME_PATH=/net/storage/pr3/plgrid/plggideascv/plgwm5/coding_distill
+      export RUNS_DIR=$PROJECT_HOME_PATH/runs
+      export DATA_DIR=$PROJECT_HOME_PATH/data
+      export HF_HOME=$PROJECT_HOME_PATH/hf_cache
+
+      export PIXI_HOME=$PROJECT_HOME_PATH/pixi
+      export PATH="$USER_STORAGE/.pixi/bin:$PATH"
+      export XDG_DATA_HOME="$PIXI_HOME/data"
+      export XDG_CACHE_HOME="$PIXI_HOME/cache"
+      export XDG_STATE_HOME="$PIXI_HOME/state"
+      export XDG_CONFIG_HOME="$PIXI_HOME/config"
+      export RATTLER_CACHE_DIR="$XDG_CACHE_HOME/rattler"
+      export UV_CACHE_DIR="$XDG_CACHE_HOME/uv"
+      export PIXI_CACHE_DIR="$XDG_CACHE_HOME/pixi"
+      export TRITON_CACHE_DIR=$XDG_CACHE_HOME/triton
+      export WANDB_DIR=$PROJECT_HOME_PATH
+      export WANDB_ARTIFACT_DIR=$PROJECT_HOME_PATH/wandb_artifacts
+
+      eval "$(pixi shell-hook -e helios-eval --manifest-path "$PIXI_HOME/pixi.toml")"
 
 
   lem:
