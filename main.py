@@ -2,7 +2,7 @@ import os
 
 from mrunner.helpers.client_helper import get_configuration
 
-from src.dataset import build_dataset
+from src.dataset import assert_tokenizer_matches, build_dataset
 from src.model import build_model
 from src.paths import resolve_output_dir
 from src.provenance import write_run_metadata
@@ -23,5 +23,8 @@ if "wandb" in params.train.get("report_to", "none"):
     init_wandb(metadata)
 
 model, tokenizer = build_model(params.model)
+# the model may legitimately borrow another's artifact -- Qwen2.5-Coder
+# sizes share a tokenizer -- so compare what the tokenizer is, not its name
+assert_tokenizer_matches(params.data, tokenizer)
 train_dataset, eval_dataset = build_dataset(params.data)
 train(model, tokenizer, train_dataset, eval_dataset, params.train, output_dir)

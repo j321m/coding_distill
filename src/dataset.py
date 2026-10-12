@@ -1,6 +1,7 @@
 """The pre-tokenized dataset: where it lives, what it is, and loading it."""
 
 
+import hashlib
 import json
 import os
 import re
@@ -10,6 +11,7 @@ from datasets import load_from_disk
 from src.paths import expand_path
 
 META_FILE = "meta.json"
+FINGERPRINT_FIELD = "tokenizer_fingerprint"
 
 # what defines *which* artifact this is
 IDENTITY_FIELDS = (
@@ -25,6 +27,15 @@ IDENTITY_FIELDS = (
 
 def _slug(value):
     return re.sub(r"[^A-Za-z0-9]+", "-", str(value)).strip("-").lower()
+
+
+def tokenizer_fingerprint(tokenizer):
+    parts = (
+        tokenizer.backend_tokenizer.to_str(),  # vocab, merges, normalizer
+        tokenizer.chat_template or "",
+        json.dumps(tokenizer.special_tokens_map, sort_keys=True),
+    )
+    return hashlib.sha256("\0".join(parts).encode()).hexdigest()[:16]
 
 
 def artifact_name(params):
@@ -43,8 +54,10 @@ def artifact_path(params):
     return os.path.join(expand_path(params.data_dir, "data_dir"), artifact_name(params))
 
 
-def write_meta(path, params, rows):
+def write_meta(path, params, rows, tokenizer=None):
     meta = {field: params.get(field) for field in IDENTITY_FIELDS}
+    if tokenizer is not None:
+        meta[FINGERPRINT_FIELD] = tokenizer_fingerprint(tokenizer)
     meta["rows"] = rows
     meta["filters"] = {
         "drop_finish_reason": params.get("drop_finish_reason"),
@@ -73,6 +86,29 @@ def assert_meta_matches(path, params):
             )
         )
     return meta
+
+
+def assert_tokenizer_matches(params, tokenizer):
+    """Refuse to train on data built by a different tokenizer.
+    """
+    path = artifact_path(params)
+    with open(os.path.join(path, META_FILE)) as file:
+        recorded = json.load(file).get(FINGERPRINT_FIELD)
+    if recorded is None:
+        print(
+            f"{path}/{META_FILE} predates tokenizer fingerprints; falling back to "
+            f"comparing names ({params.get('tokenizer')}). Re-run the tokenize job "
+            "to get the real check."
+        )
+        return
+
+    actual = tokenizer_fingerprint(tokenizer)
+    if actual != recorded:
+        raise SystemExit(
+            f"tokenizer does not match the data at {path}: artifact={recorded} "
+            f"model={actual}. Vocabulary, chat template or special tokens differ, "
+            "so the stored input_ids mean something else than this model reads."
+        )
 
 
 def build_dataset(params):
