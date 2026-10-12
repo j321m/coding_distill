@@ -5,9 +5,7 @@
 LiveCodeBench ships no prompt style matching what this model was fine-tuned on,
 so one is installed at runtime: `QwQ` omits the system turn and reframes the
 task, `CodeQwenInstruct` is not think-aware, and `DeepSeekR1` emits DeepSeek
-tokens absent from Qwen's vocabulary. Evaluating off-distribution would make a
-zero unattributable between a broken harness, a weak model and a prompt
-mismatch.
+tokens absent from Qwen's vocabulary.
 """
 
 import json
@@ -31,11 +29,7 @@ from src.tracking import init_wandb
 
 
 def report_generation_lengths(model_repr, tokenizer, max_tokens, run):
-    """% of samples that hit the token cap, and % that contain a code fence.
-
-    These two separate "the model is weak" from "every answer was truncated
-    mid-<think> before any code appeared", which score alone cannot.
-    """
+    """% of samples that hit the token cap, and % that contain a code fence."""
     path = get_output_path(model_repr, get_args())
     if not os.path.exists(path):
         print(f"no generations found to measure at {path}")

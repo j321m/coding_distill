@@ -4,16 +4,8 @@ import os
 
 
 def init_wandb(metadata):
-    """Start the run before training, so its config survives a crash in loading.
-
-    HF's `WandbCallback` reuses a live `wandb.run` instead of creating its own at
-    `on_train_begin`, so `report_to="wandb"` keeps working and picks this up.
-
-    `wandb.init` takes no entity/project: both come from `WANDB_ENTITY` /
-    `WANDB_PROJECT` in `[activation.env]` (pixi.toml), which reach the job
-    through the `pixi shell-hook` in prolog_cmd.
-    """
-    if os.environ.get("RANK", "0") != "0":
+    """Start the run before training, so its config survives a crash in loading."""
+    if os.environ.get("RANK", "0") != "0":  # torchrun runs this on every rank
         return None
 
     import wandb

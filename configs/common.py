@@ -1,10 +1,3 @@
-"""Submit-side machinery shared by every config.
-
-Configs stay pure parameter dicts; everything that is true of *all* experiments
--- entry point, what gets shipped, code provenance, the log-location print --
-lives here, so a new config is a name and its parameters.
-"""
-
 import subprocess
 
 from munch import Munch
@@ -37,13 +30,7 @@ EXCLUDE = [
 
 
 def _git_info():
-    """Provenance of the code being submitted, read on the laptop because `.git`
-    is excluded above -- the compute node cannot recover any of this.
-
-    The diff matters as much as the sha: mrunner ships the *working tree*, so a
-    sha recorded next to uncommitted edits is a claim `git checkout` cannot
-    honour. With the patch, a dirty run stays reproducible.
-    """
+    """Provenance of the code being submitted"""
 
     def git(*args):
         return subprocess.check_output(
@@ -58,12 +45,7 @@ def _git_info():
 
 
 def data_params(tokenize_params, **extra):
-    """Prefix a tokenize config for main.py's `data_` nesting.
-
-    Training configs derive their data block from the same dict the tokenize job
-    used, so the two cannot drift; `build_dataset` still asserts it against the
-    artifact's meta.json.
-    """
+    """Prefix a tokenize config for main.py's `data_` nesting."""
     return {f"data_{key}": value for key, value in {**tokenize_params, **extra}.items()}
 
 
@@ -72,10 +54,7 @@ def make_experiment(name, parameters, script="python main.py", **kwargs):
 
     `git_*` rides in `parameters` because the slurm backend ignores
     `Experiment.env` (only `backends/k8s.py` reads it), so the pickled parameters
-    are the only channel to the job. `src/provenance.py` lifts these keys back out
-    into the `git` block of `args.json`, keeping them out of the hyperparameters.
-
-    `script` defaults to training; the tokenization job overrides it.
+    are the only channel to the job.
     """
     commit, dirty, diff = _git_info()
     return Experiment(

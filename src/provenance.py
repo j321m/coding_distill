@@ -58,11 +58,7 @@ def _versions():
 
 
 def write_run_metadata(output_dir, params):
-    """Write `args.json` (and `git.patch`, if the submitted tree was dirty).
-
-    Called before the model and the dataset are built: a run that dies while
-    loading is precisely the one whose config you want to read afterwards.
-    """
+    """Write `args.json` (and `git.patch`, if the submitted tree was dirty)."""
     is_rank_zero = os.environ.get("RANK", "0") == "0"
     recorded = unmunchify(params)
     # configs/common.py injects these into the parameters because the slurm

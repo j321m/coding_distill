@@ -89,8 +89,7 @@ def assert_meta_matches(path, params):
 
 
 def assert_tokenizer_matches(params, tokenizer):
-    """Refuse to train on data built by a different tokenizer.
-    """
+    """Refuse to train on data built by a different tokenizer."""
     path = artifact_path(params)
     with open(os.path.join(path, META_FILE)) as file:
         recorded = json.load(file).get(FINGERPRINT_FIELD)
