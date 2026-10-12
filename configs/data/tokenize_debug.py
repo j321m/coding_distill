@@ -4,7 +4,7 @@ pixi run tokenize-debug
 """
 
 from configs.common import make_experiment
-from configs.tokenize import TOKENIZE
+from configs.data.tokenize import TOKENIZE
 
 experiment = make_experiment(
     "tokenize_debug",

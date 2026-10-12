@@ -1,6 +1,6 @@
 """Pre-tokenize the full Python split on the cluster.
 
-pixi run mrun --context helios run configs/tokenize.py
+pixi run mrun --context helios run configs/data/tokenize.py
 """
 
 from configs.common import make_experiment
@@ -11,7 +11,6 @@ TOKENIZE = dict(
     split="train",
     tokenizer="Qwen/Qwen2.5-Coder-0.5B-Instruct",
     max_length=32768,
-    # traces R1 itself cut off: 4.2% of rows, a free flag rather than a heuristic
     drop_finish_reason="length",
     test_size=0.05,
     split_seed=0,

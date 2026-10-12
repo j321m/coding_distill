@@ -4,7 +4,8 @@
 The cluster $HOME has a file-count quota, and a pixi env (plus its rattler/uv
 caches) is by far the biggest contributor. So the env is not shipped with the
 code: `pixi.toml` / `pixi.lock` / `.pixi` are excluded from the mrunner code
-snapshot (see configs/toy.py) and the env lives at $PIXI_HOME on a storage disk,
+snapshot (see EXCLUDE in configs/common.py) and the env lives at $PIXI_HOME on a
+storage disk,
 where this script maintains it.
 
 $PIXI_HOME and friends are defined once per context, in the `prolog_cmd` of
