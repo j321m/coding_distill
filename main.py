@@ -2,9 +2,10 @@ import os
 
 from mrunner.helpers.client_helper import get_configuration
 
-from src.data import build_dataset
+from src.dataset import build_dataset
 from src.model import build_model
-from src.run_dir import resolve_output_dir, write_run_metadata
+from src.paths import resolve_output_dir
+from src.provenance import write_run_metadata
 from src.tracking import init_wandb
 from src.trainer import train
 

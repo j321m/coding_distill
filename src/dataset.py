@@ -1,12 +1,13 @@
-"""Identity of a pre-tokenized dataset: where it lives, and what it is.
+"""The pre-tokenized dataset: where it lives, what it is, and loading it."""
 
-Tokens from the wrong tokenizer train happily and give a plausible loss curve, so
-the directory name encodes the identity and `meta.json` is asserted before use.
-"""
 
 import json
 import os
 import re
+
+from datasets import load_from_disk
+
+from src.paths import expand_path
 
 META_FILE = "meta.json"
 
@@ -39,13 +40,7 @@ def artifact_name(params):
 
 
 def artifact_path(params):
-    data_dir = os.path.expandvars(params.data_dir)
-    if "$" in data_dir:
-        raise SystemExit(
-            f"unresolved variable in data_dir: {params.data_dir!r} -> {data_dir!r}; "
-            "it must be exported by prolog_cmd in clusters.yaml"
-        )
-    return os.path.join(data_dir, artifact_name(params))
+    return os.path.join(expand_path(params.data_dir, "data_dir"), artifact_name(params))
 
 
 def write_meta(path, params, rows):
@@ -78,3 +73,11 @@ def assert_meta_matches(path, params):
             )
         )
     return meta
+
+
+def build_dataset(params):
+    """Load a pre-tokenized artifact -- see scripts/tokenize_dataset.py."""
+    path = artifact_path(params)
+    assert_meta_matches(path, params)
+    splits = load_from_disk(path)
+    return splits["train"], splits["test"]
