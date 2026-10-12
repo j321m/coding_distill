@@ -7,14 +7,13 @@ attributable to something other than a guessed learning rate.
 Probe before committing to the full run -- Liger is untestable outside CUDA and
 no-ops silently on an unsupported architecture:
 
-    pixi run mrun --context helios run configs/sft.py     # after a max_steps probe
+    pixi run mrun --context helios run configs/train/sft.py     # after a max_steps probe
 """
 
 from configs.common import data_params, make_experiment
-from configs.tokenize import TOKENIZE
+from configs.data.tokenize import TOKENIZE
 
-# effective batch 128, matching the recipe's 2 x 8 accum x 8 GPUs. Raise
-# batch_size and lower accumulation once the probe run reports memory headroom.
+# effective batch 128, matching the recipe's 2 x 8 accum x 8 GPUs. 
 BATCH_SIZE = 1
 GRADIENT_ACCUMULATION_STEPS = 128
 
@@ -36,12 +35,8 @@ experiment = make_experiment(
         train_gradient_checkpointing=True,
         train_sampling_strategy="group_by_length",
         train_use_liger_kernel=True,
-        # `fused_linear_cross_entropy` produces NaN gradients on this stack
-        # (Qwen2 + bf16 + gradient checkpointing): grad_norm went NaN at step 5,
-        # loss at step 6, bisected against a clean Liger-off run. Disabling it
-        # gives the fp32 logits back, so memory matches Liger-off -- but the
-        # remaining rope/rms_norm/swiglu kernels are worth ~22% (11:14 vs 14:24
-        # over 12 steps), which is why Liger stays on at all.
+        # `fused_linear_cross_entropy` produces NaN gradients; the
+        # remaining rope/rms_norm/swiglu kernels are worth ~22% speedups
         train_liger_kernel_config={"fused_linear_cross_entropy": False},
         train_bf16=True,
         train_logging_steps=1,

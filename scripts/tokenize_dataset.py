@@ -1,7 +1,7 @@
 """Pre-tokenize a CoT dataset into a training-ready artifact.
 
-pixi run mrun --context helios run configs/tokenize.py
-pixi run python -m scripts.tokenize_dataset --ex configs/tokenize_debug.py
+pixi run mrun --context helios run configs/data/tokenize.py
+pixi run python -m scripts.tokenize_dataset --ex configs/data/tokenize_debug.py
 """
 
 import os

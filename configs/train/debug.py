@@ -4,14 +4,14 @@ pixi run debug
 """
 
 from configs.common import data_params, make_experiment
-from configs.tokenize import TOKENIZE
+from configs.data.tokenize import TOKENIZE
 
 experiment = make_experiment(
     "debug",
     dict(
         model_name=TOKENIZE["tokenizer"],
         model_pad_token="<|endoftext|>",
-        # the artifact configs/tokenize_debug.py produced
+        # the artifact configs/data/tokenize_debug.py produced
         **data_params(TOKENIZE, data_dir="out/data", filter_n=64),
         train_output_dir="out/debug",
         train_learning_rate=1e-4,

@@ -31,13 +31,13 @@ WANDB_PROJECT = "coding_distill"
 
 [tasks]
 # local CPU run, no backend involved
-debug = "python main.py --ex configs/debug.py"
-tokenize-debug = "python -m scripts.tokenize_dataset --ex configs/tokenize_debug.py"
+debug = "python main.py --ex configs/train/debug.py"
+tokenize-debug = "python -m scripts.tokenize_dataset --ex configs/data/tokenize_debug.py"
 update-pixi = "python update_pixi.py"
 # pull args.json + LiveCodeBench outputs into out/runs for local analysis
 sync-runs = "python sync_runs.py"
 [tasks.mrun]
-# repo-scoped mrunner: pixi run mrun --context entropy run configs/toy.py
+# repo-scoped mrunner: pixi run mrun --context entropy run configs/train/sft.py
 # PYTHONPATH, not `python -m`: mrunner exec()s the config file with no package
 # context, and the console script puts its own bin/ on sys.path, so
 # `from configs.common import ...` needs the cwd added.
