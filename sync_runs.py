@@ -1,10 +1,6 @@
 #!/usr/bin/env python
 """Pull run metadata and eval outputs off a cluster, for local analysis.
 
-$RUNS_DIR is defined once, in the `prolog_cmd` of clusters.yaml. Rather than
-repeat the path here, this resolves it the way update_pixi.py does: by running
-that block's export lines on the cluster and asking what it came out as.
-
     pixi run python sync_runs.py --context helios
     pixi run python sync_runs.py --context helios --dry-run
 """
@@ -15,10 +11,6 @@ from pathlib import Path
 
 from update_pixi import connect_with_passphrase, env_setup_lines, load_context
 
-# Only what analysis needs: each run's args.json and LiveCodeBench's three
-# output files. Everything else is excluded rather than named, which also keeps
-# `lcb/<model>/model/` out -- those entries are symlinks into multi-GB
-# checkpoints, and an rsync that followed them would pull the weights too.
 FILTERS = [
     "--include=*/",
     "--include=args.json",

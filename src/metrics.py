@@ -1,11 +1,5 @@
-"""Per-step cost metrics: what HF's Trainer does not measure.
-
-Loss, grad norm and learning rate arrive for free -- `Trainer` logs them every
-`logging_steps` and `rewrite_logs` prefixes them `train/`. What it never reports
-is what a step *costs*: wall-clock time, tokens pushed through, memory headroom.
-Those are the numbers that decide batch size and sharding at 7B/32k, and reading
-them after an OOM is too late.
-"""
+"""Per-step cost metrics: step time, throughput, memory. Loss and grad norm
+come from Trainer for free; what a step *costs* does not."""
 
 import time
 
@@ -19,13 +13,9 @@ TOKENS_KEY = "num_input_tokens_seen"
 class ThroughputCallback(TrainerCallback):
     """Log step time, token throughput and GPU memory alongside HF's metrics.
 
-    This runs *after* `WandbCallback`: `Trainer.__init__` builds
-    `callbacks = default_callbacks + callbacks`, so the integration callbacks fire
-    first and wandb has already logged by the time `on_log` gets here. Editing
-    `logs` would therefore change nothing -- hence the separate `wandb.log` call,
-    which opens its own `_step`. Re-logging the token count is what stitches the
-    two payloads together: `init_wandb` makes it the x-axis for `train/*`, so a
-    shared token value puts these points on the same place in every chart.
+    Runs after `WandbCallback`, which has already logged by the time `on_log`
+    fires, so editing `logs` would do nothing -- hence a separate `wandb.log`.
+    Re-logging the token count stitches the two payloads onto the same x-axis.
     """
 
     def __init__(self):
@@ -42,11 +32,8 @@ class ThroughputCallback(TrainerCallback):
         if not state.is_world_process_zero:
             return
 
-        # Trainer logs an end-of-training summary right after the last step: no
-        # steps ran, no tokens consumed. Measured, it reports a ~0s step and 0
-        # tokens/s, and wandb's summary keeps the last value -- so that garbage
-        # is what the run ends up reporting. Per-step payloads carry `loss`, only
-        # the summary carries `train_loss`.
+        # the end-of-training summary: no steps ran, so measuring it would report
+        # a ~0s step and 0 tokens/s, which wandb's summary would then keep
         if logs and "train_loss" in logs:
             return
 
@@ -58,15 +45,14 @@ class ThroughputCallback(TrainerCallback):
         now = time.monotonic()
         metrics = {}
 
-        # Skipped on the first call, where there is no interval to divide by.
+        # skipped on the first call, where there is no interval to divide by
         if self._last_time is not None:
             elapsed = now - self._last_time
             tokens = logs.get(TOKENS_KEY) if logs else None
             if elapsed > 0:
                 metrics["train/sec_per_step"] = elapsed / max(args.logging_steps, 1)
                 if tokens is not None and self._last_tokens is not None:
-                    # This is the rate right now; theirs (train_tokens_per_second)
-                    # is the run average.
+                    # the rate now; train_tokens_per_second is the run average
                     metrics["train/tokens_per_sec_interval"] = (
                         tokens - self._last_tokens
                     ) / elapsed
@@ -78,8 +64,8 @@ class ThroughputCallback(TrainerCallback):
         self._last_time = now
 
         if torch.cuda.is_available():  # absent on the local MPS/CPU path
-            # Two readings, two questions: the high-water mark says how close the
-            # job is to OOM, the per-interval peak says which phase spikes.
+            # high water says how close the job is to OOM, the interval peak
+            # says which phase spikes
             peak = torch.cuda.max_memory_allocated() / BYTES_PER_GB
             torch.cuda.reset_peak_memory_stats()
             self._high_water = max(self._high_water, peak)

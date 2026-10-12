@@ -1,11 +1,3 @@
-"""LiveCodeBench, as a dependency.
-
-Importing this module has side effects, all of them forced by how upstream is
-built: it puts the submodule on `sys.path` and imports `lcb_runner` from inside
-the checkout. Nothing here is specific to a particular evaluation -- see
-scripts/eval_lcb.py for that.
-"""
-
 import json
 import os
 import shutil
@@ -51,17 +43,7 @@ __all__ = [
 
 
 def readable_checkpoint(params, output_dir):
-    """A view of the checkpoint whose tokenizer config this env can read.
-
-    Training runs on transformers 5, which renames `additional_special_tokens`
-    to `extra_special_tokens` and writes it as a list; the 4.x that vllm pins
-    reads that same key expecting a dict and dies on `.keys()`. Only the one
-    file is rewritten -- everything else is symlinked, so no weights are copied
-    and the training artifact is left untouched.
-
-    `model_path` bypasses all of it: a hub id has no local directory to read,
-    and its config was written by whatever transformers the uploader used.
-    """
+    """A view of the checkpoint whose tokenizer config this env can read."""
     if params.get("model_path"):
         return params.model_path
 
@@ -91,13 +73,7 @@ def readable_checkpoint(params, output_dir):
 
 
 def install_prompt_style(model_repr, checkpoint, template):
-    """Register the model under `model_repr` and have it use `template`.
-
-    `LanguageModelStore` is a plain dict so a model can be added, but
-    `format_prompt_generation` is an if/elif chain on `LMStyle`, so a new style
-    cannot -- hence borrowing QwQ's branch and rebinding the function it calls.
-    The submodule is pinned because of this coupling.
-    """
+    """Register the model under `model_repr` and have it use `template`."""
     from datetime import datetime
 
     code_generation.get_qwen_qwq_question_template_answer = template

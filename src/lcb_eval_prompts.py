@@ -1,10 +1,4 @@
-"""The prompt this model was fine-tuned on, reproduced for evaluation.
-
-Wrapper-only fidelity. The training problem body carried `## Constraints` /
-`## Input Format` sections assembled from the codeforces dataset's separate
-fields, which LiveCodeBench does not expose -- reconstructing them from its
-single `question_content` blob would match neither corpus.
-"""
+"""The prompt this model was fine-tuned on, reproduced for evaluation."""
 
 import re
 
@@ -46,18 +40,9 @@ CODE_FENCE = re.compile(r"```python", re.IGNORECASE)
 
 
 def build_sft_template(tokenizer):
-    """The question -> prompt function LiveCodeBench should call.
-
-    A closure over the tokenizer because the chat template has to be the same
-    call that produced the training data, so the two cannot drift.
-    """
-
+    """The question -> prompt function LiveCodeBench should call."""
     def sft_question_template(question):
-        """Branches on `starter_code` the way every upstream template does.
-
-        Without it a LeetCode-style problem is asked for a stdin/stdout program
-        that its functional checker can never call -- zero by construction.
-        """
+        """Branches on `starter_code` the way every upstream template does."""
         body = (
             SFT_PROMPT_STARTER.format(starter_code=question.starter_code)
             if question.starter_code
