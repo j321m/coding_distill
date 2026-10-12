@@ -11,7 +11,7 @@ from datasets import load_dataset
 from mrunner.helpers.client_helper import get_configuration
 from transformers import AutoTokenizer
 
-from src.artifact import artifact_path, write_meta
+from src.dataset import artifact_path, write_meta
 
 params = get_configuration()
 

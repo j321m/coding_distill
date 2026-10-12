@@ -4,7 +4,7 @@ from src.metrics import ThroughputCallback
 
 
 def train(model, tokenizer, train_dataset, eval_dataset, params, output_dir):
-    """`output_dir` is resolved and created by main.py -- see src/run_dir.py."""
+    """`output_dir` is resolved and created by main.py -- see src/paths.py."""
     report_to = params.get("report_to", "none")
     args = TrainingArguments(
         output_dir=output_dir,

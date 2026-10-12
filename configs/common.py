@@ -32,6 +32,7 @@ EXCLUDE = [
     "__pycache__",
     "out",
     "assets",
+    "notebooks",
 ]
 
 
@@ -71,7 +72,7 @@ def make_experiment(name, parameters, script="python main.py", **kwargs):
 
     `git_*` rides in `parameters` because the slurm backend ignores
     `Experiment.env` (only `backends/k8s.py` reads it), so the pickled parameters
-    are the only channel to the job. `src/run_dir.py` lifts these keys back out
+    are the only channel to the job. `src/provenance.py` lifts these keys back out
     into the `git` block of `args.json`, keeping them out of the hyperparameters.
 
     `script` defaults to training; the tokenization job overrides it.

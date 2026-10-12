@@ -26,7 +26,7 @@ from src.lcb import (
     readable_checkpoint,
 )
 from src.lcb_eval_prompts import CODE_FENCE, build_sft_template
-from src.run_dir import write_run_metadata
+from src.provenance import write_run_metadata
 from src.tracking import init_wandb
 
 

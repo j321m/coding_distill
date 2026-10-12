@@ -1,4 +1,4 @@
-"""Where a run writes, and what it records about itself."""
+"""What a run records about itself: config, code, environment, versions."""
 
 import json
 import os
@@ -45,23 +45,6 @@ VERSIONED_PACKAGES = (
 )
 
 PATCH_FILE = "git.patch"
-
-
-def resolve_output_dir(output_dir):
-    """`output_dir` is a base shared by every run, so give each job its own
-    subdirectory. mrunner gives runs a unique cwd for free, but checkpoints live
-    outside the copied repo, so uniqueness has to come from the job id."""
-    expanded = os.path.expandvars(output_dir)
-    if "$" in expanded:
-        # The base comes from prolog_cmd. Unexpanded, it would create a literal
-        # `$RUNS_DIR` under the code snapshot on $HOME -- the one filesystem this
-        # whole out-of-tree arrangement exists to keep runs off.
-        raise SystemExit(
-            f"unresolved variable in output_dir: {output_dir!r} -> {expanded!r}; "
-            "it must be exported by prolog_cmd in clusters.yaml"
-        )
-    run_id = os.environ.get("SLURM_JOB_ID", "local")  # unique per array task
-    return os.path.join(expanded, run_id)
 
 
 def _versions():
