@@ -93,6 +93,6 @@ dataset.save_to_disk(staging)
 shutil.rmtree(path, ignore_errors=True)
 os.rename(staging, path)
 rows = {split: len(subset) for split, subset in dataset.items()}
-write_meta(path, params, rows)
+write_meta(path, params, rows, tokenizer)
 
 print(f"wrote {rows} to {path}")
