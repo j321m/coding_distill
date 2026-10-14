@@ -4,6 +4,7 @@ so mrunner never sees tyro and tyro never sees mrunner's `--config`.
 Keys are dotted (`train.learning_rate`) -- tyro's syntax for nested dataclasses.
 """
 
+import os
 import subprocess
 import sys
 
@@ -22,6 +23,15 @@ if __name__ == "__main__":
             # bools too: with no default, tyro parses them as `--x True`
             flags.append(str(value))
 
-    cmd = [sys.executable, "-m", "main"] + flags
+    # one process per GPU (DDP); a single process on several GPUs makes
+    # Trainer fall back to DataParallel, which gathers all logits on GPU 0.
+    # SLURM sets CUDA_VISIBLE_DEVICES from --gres; unset locally -> no GPUs.
+    visible = os.environ.get("CUDA_VISIBLE_DEVICES", "")
+    n_gpus = len(visible.split(",")) if visible else 0
+    if n_gpus > 1:
+        launcher = ["-m", "torch.distributed.run", f"--nproc-per-node={n_gpus}"]
+    else:
+        launcher = []
+    cmd = [sys.executable, *launcher, "-m", "main"] + flags
     print("Running command:", cmd, flush=True)
     subprocess.run(cmd, check=True)

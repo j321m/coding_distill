@@ -8,7 +8,6 @@ Reference: plan-crl (local) — same stack (tyro + mrunner), same problem; nano
 
 ## Done
 
-- label masking via `attention_mask` (pad == eos == 0 on SmolLM2)
 - checkpoints to `/storage_nvme_4/coding_distill/$USER/runs/<SLURM_JOB_ID>`,
   resolved at runtime (`src/trainer.py:resolve_output_dir`)
 - structured stdout logging with host + local_rank (`main.py`)
@@ -26,6 +25,8 @@ Watch:
 - required bools parse as `--x True`; `None` arrives as `"None"` -> field `Optional`
 - specs import `configs._helper_functions` only via `pixi run mrun` (sets PYTHONPATH)
 - mrunner pinned to `c6be9e4` in `pixi.toml`
+- `mrunner_run.py` starts torchrun when >1 GPU visible; no `import torch` there
+  (PyPI torch + conda-forge ICU clash on libstdc++ in one process)
 
 ---
 
@@ -34,18 +35,24 @@ Watch:
 Dataset `open-r1/codeforces-cots`, start `solutions_py_decontaminated` (8.1k),
 then `solutions_decontaminated` (40.7k). Tokens p50 12.2k, max 25.9k.
 
-- [ ] tokenize ragged: `apply_chat_template(messages, add_generation_prompt=False)`,
-  no padding, no truncation (shape: plan-crl `scripts/tokenize_dataset.py:57`)
-- [ ] labels `-100` on the prompt (`messages[:1]`)
-- [ ] drop `finish_reason == "length"` (4.2%)
-- [ ] `max_length=32768`, assert instead of truncate
-- [ ] collate: dynamic pad, labels padded with `-100`, mask from true lengths
-  (plan-crl `sft_train_fast.py:468`)
-- [ ] debug model with a chat template, so there is one data path; replace the
-  TinyStories / raw-text config fields
+- [x] tokenize ragged with the chat template, no padding, no truncation (`src/data.py`)
+- [x] labels `-100` on the prompt (`messages[:1]` + assistant header)
+- [x] drop `finish_reason == "length"` (4.2%)
+- [x] `max_length=32768`, assert instead of truncate
+- [x] collate: dynamic pad, labels padded with `-100`, mask from true lengths
+- [x] debug model `tiny-Qwen2ForCausalLM-2.5` (Qwen2.5 tokenizer + template);
+  `pixi run debug` trains
+- [x] DDP via torchrun (`mrunner_run.py`)
+- [x] `train.loss`: `full` | `liger` | `chunked`; chunked == full on CPU (loss,
+  grads, grad_norm)
+- [ ] `configs/toy.py` (Qwen2.5-Coder-0.5B-Instruct, batch 1, `liger`) on entropy
+- [ ] `loss=chunked` on entropy
 
 Watch:
 - eos comes from the chat template (`<|im_end|>` on Qwen) — no manual append
+- logits are `seq × 151k vocab` (~15GB fp32 at 25k) — `full` OOMs, use
+  `liger` / `chunked`
+- liger monkey-patches transformers' Qwen2 code — recheck after a transformers bump
 
 ---
 
