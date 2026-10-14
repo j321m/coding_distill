@@ -12,23 +12,22 @@ experiments_list = create_experiments_helper(
     **HELPER_KWARGS,
     # flat so mrunner can sweep them; dotted keys -> tyro nesting (src/config.py)
     base_config={
-        "model.name": "hf-internal-testing/tiny-random-LlamaForCausalLM",
-        "model.pad_token": "<unk>",
-        "data.name": "roneneldan/TinyStories",
-        "data.config": None,
-        "data.split": "train[:64]",
-        "data.text_field": "text",
-        "data.max_length": 64,
-        "data.padding": "max_length",
-        "data.truncation": True,
+        # random weights, same tokenizer + chat template as Qwen2.5-Coder
+        "model.name": "trl-internal-testing/tiny-Qwen2ForCausalLM-2.5",
+        "data.name": "open-r1/codeforces-cots",
+        "data.config": "solutions_py_decontaminated",
+        "data.split": "train[:8]",  # the first rows are short (< 2.5k tokens)
+        "data.max_length": 32768,
         "train.output_dir": "out/debug",
         "train.learning_rate": 1e-4,
-        "train.batch_size": 4,
+        "train.batch_size": 2,
         "train.num_epochs": 1,
         "train.max_steps": 5,
         "train.logging_steps": 1,
         "train.save_steps": 1000,
         "train.bf16": False,
+        "train.loss": "chunked",  # liger needs a GPU
+        "train.loss_chunk_size": 1024,
     },
     params_grid={},  # local run takes only the first combination
 )

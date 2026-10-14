@@ -1,5 +1,5 @@
 from dataclasses import dataclass
-from typing import Optional
+from typing import Literal, Optional
 
 # No defaults on purpose: every value comes from the spec in configs/, so a
 # missing key is a startup error instead of a silent fallback.
@@ -10,27 +10,21 @@ from typing import Optional
 @dataclass
 class ModelArgs:
     name: str
-    """HF hub id or local path, used for both model and tokenizer."""
-    pad_token: str
-    """Set on the tokenizer; many LMs ship without one."""
+    """HF hub id or local path, used for both model and tokenizer; needs a chat
+    template and a pad token."""
 
 
 @dataclass
 class DataArgs:
     name: str
-    """HF hub dataset id."""
+    """HF hub dataset id; rows have `messages` (user, assistant) and
+    `finish_reason`."""
     config: Optional[str]
     """Dataset config name; None for datasets that have only one."""
     split: str
     """Split with HF slicing, e.g. `train[:1%]`."""
-    text_field: str
-    """Column holding the raw text to tokenize."""
     max_length: int
-    """Tokenizer max length, in tokens."""
-    padding: str
-    """Tokenizer padding mode, e.g. `max_length`."""
-    truncation: bool
-    """Cut samples longer than max_length."""
+    """Longest allowed sample, in tokens; a longer one is an error."""
 
 
 @dataclass
@@ -51,6 +45,12 @@ class TrainArgs:
     """Checkpoint every N steps."""
     bf16: bool
     """bf16 mixed precision; off on CPU."""
+    loss: Literal["full", "liger", "chunked"]
+    """Next-token CE: `full` materializes `seq x vocab` logits (HF default);
+    `liger` uses Liger's fused linear+CE kernel (GPU only); `chunked` is our
+    own chunked CE (`src/trainer.py`)."""
+    loss_chunk_size: int
+    """Tokens per logits chunk for `loss=chunked`."""
 
 
 @dataclass

@@ -3,6 +3,7 @@ from transformers import AutoModelForCausalLM, AutoTokenizer
 
 def build_model(params):
     tokenizer = AutoTokenizer.from_pretrained(params.name)
-    tokenizer.pad_token = params.pad_token  # explicit: many LMs ship without one
+    assert tokenizer.chat_template, f"{params.name} has no chat template"
+    assert tokenizer.pad_token_id is not None, f"{params.name} has no pad token"
     model = AutoModelForCausalLM.from_pretrained(params.name)
     return model, tokenizer

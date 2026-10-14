@@ -26,6 +26,8 @@ transformers = "*"
 datasets = "*"
 accelerate = "*"
 tyro = "*"
+# fused linear + cross-entropy kernel, `train.loss=liger`
+liger-kernel = "*"
 # pinned; bump deliberately
 mrunner = { git = "https://gitlab.com/awarelab/mrunner.git", rev = "c6be9e48d2d4dea7b71d33bc743254f49c876c11" }
 
