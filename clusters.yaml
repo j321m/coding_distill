@@ -31,14 +31,22 @@ contexts:
       export UV_CACHE_DIR="$XDG_CACHE_HOME/uv"
       export PIXI_CACHE_DIR="$XDG_CACHE_HOME/pixi"
 
-      export RUNS_DIR=...
-      export DATA_DIR=...
-      export WANDB_DIR=...
-      export WANDB_ARTIFACT_DIR=...
-      export XDG_CONFIG_HOME=...
+      export XDG_CONFIG_HOME="$PIXI_HOME/config"
+      export TRITON_CACHE_DIR=$XDG_CACHE_HOME/triton
+
+      export RUNS_DIR=$PROJECT_HOME_PATH/$USER/runs
+      # pre-tokenized datasets, written by scripts/tokenize_dataset.py; shared
+      export DATA_DIR=$PROJECT_HOME_PATH/data
+      # wandb run dirs default to $PWD -- which is the mrunner code snapshot on
+      # $HOME. Runs land in $WANDB_DIR/wandb/run-*, caches follow XDG above.
+      export WANDB_DIR=$PROJECT_HOME_PATH/$USER
+      export WANDB_ARTIFACT_DIR=$PROJECT_HOME_PATH/$USER/wandb_artifacts
+
+      # per-user secrets (WANDB_API_KEY, HF_TOKEN), never committed
+      [ -f ~/.coding_distill_env ] && source ~/.coding_distill_env
 
       # activate the out-of-tree env
-      eval "$(pixi shell-hook --manifest-path "$PIXI_HOME/pixi.toml")"
+      eval "$(pixi shell-hook -e entropy --manifest-path "$PIXI_HOME/pixi.toml")"
 
   helios:
     backend_type: slurm
@@ -81,6 +89,9 @@ contexts:
       export WANDB_DIR=$PROJECT_HOME_PATH
       export WANDB_ARTIFACT_DIR=$PROJECT_HOME_PATH/wandb_artifacts
 
+      # per-user secrets (WANDB_API_KEY, HF_TOKEN), never committed
+      [ -f ~/.coding_distill_env ] && source ~/.coding_distill_env
+
       # activate the out-of-tree env
       eval "$(pixi shell-hook -e helios --manifest-path "$PIXI_HOME/pixi.toml")"
 
@@ -122,6 +133,9 @@ contexts:
       export TRITON_CACHE_DIR=$XDG_CACHE_HOME/triton
       export WANDB_DIR=$PROJECT_HOME_PATH
       export WANDB_ARTIFACT_DIR=$PROJECT_HOME_PATH/wandb_artifacts
+
+      # per-user secrets (WANDB_API_KEY, HF_TOKEN), never committed
+      [ -f ~/.coding_distill_env ] && source ~/.coding_distill_env
 
       eval "$(pixi shell-hook -e helios-eval --manifest-path "$PIXI_HOME/pixi.toml")"
 

@@ -3,7 +3,7 @@ from transformers import AutoModelForCausalLM, AutoTokenizer
 
 def build_model(params):
     # the tokenizer that built the dataset, which is not always the model's own
-    tokenizer = AutoTokenizer.from_pretrained(params.get("tokenizer") or params.name)
+    tokenizer = AutoTokenizer.from_pretrained(params.tokenizer or params.name)
     tokenizer.pad_token = params.pad_token  # explicit: many LMs ship without one
     model = AutoModelForCausalLM.from_pretrained(params.name)
     # without this the checkpoint can ignore the token it was trained to end with

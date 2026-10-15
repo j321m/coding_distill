@@ -45,7 +45,7 @@ def artifact_name(params):
             _slug(params.config),
             _slug(params.tokenizer),
             str(params.max_length),
-            *(("debug",) if params.get("filter_n") else ()),
+            *(("debug",) if params.filter_n else ()),
         )
     )
 
@@ -55,14 +55,14 @@ def artifact_path(params):
 
 
 def write_meta(path, params, rows, tokenizer=None):
-    meta = {field: params.get(field) for field in IDENTITY_FIELDS}
+    meta = {field: getattr(params, field) for field in IDENTITY_FIELDS}
     if tokenizer is not None:
         meta[FINGERPRINT_FIELD] = tokenizer_fingerprint(tokenizer)
     meta["rows"] = rows
     meta["filters"] = {
-        "drop_finish_reason": params.get("drop_finish_reason"),
-        "filter_max_tokens": params.get("filter_max_tokens"),
-        "filter_n": params.get("filter_n"),
+        "drop_finish_reason": params.drop_finish_reason,
+        "filter_max_tokens": params.filter_max_tokens,
+        "filter_n": params.filter_n,
     }
     with open(os.path.join(path, META_FILE), "w") as file:
         json.dump(meta, file, indent=2)
@@ -74,9 +74,9 @@ def assert_meta_matches(path, params):
         meta = json.load(file)
 
     mismatched = {
-        field: (meta.get(field), params.get(field))
+        field: (meta.get(field), getattr(params, field))
         for field in IDENTITY_FIELDS
-        if meta.get(field) != params.get(field)
+        if meta.get(field) != getattr(params, field)
     }
     if mismatched:
         raise SystemExit(
@@ -96,7 +96,7 @@ def assert_tokenizer_matches(params, tokenizer):
     if recorded is None:
         print(
             f"{path}/{META_FILE} predates tokenizer fingerprints; falling back to "
-            f"comparing names ({params.get('tokenizer')}). Re-run the tokenize job "
+            f"comparing names ({params.tokenizer}). Re-run the tokenize job "
             "to get the real check."
         )
         return

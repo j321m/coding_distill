@@ -1,25 +1,26 @@
+import dataclasses
 import os
 
-from mrunner.helpers.client_helper import get_configuration
+import tyro
 
+from src.config import MainArgs
 from src.dataset import assert_tokenizer_matches, build_dataset
 from src.model import build_model
 from src.paths import resolve_output_dir
-from src.provenance import write_run_metadata
+from src.provenance import load_git, write_run_metadata
 from src.tracking import init_wandb
 from src.trainer import train
 
-# model_name -> params.model.name
-params = get_configuration(nesting_prefixes=("model_", "data_", "train_"))
+params = tyro.cli(MainArgs)
 
 # Before the model and the dataset: both can fail, and a run that dies while
 # loading is the one whose config you most want to read afterwards.
 output_dir = resolve_output_dir(params.train.output_dir)
 os.makedirs(output_dir, exist_ok=True)
-metadata = write_run_metadata(output_dir, params)
+metadata = write_run_metadata(output_dir, {**dataclasses.asdict(params), **load_git()})
 print(f"output_dir: {output_dir}")
 
-if "wandb" in params.train.get("report_to", "none"):
+if params.train.report_to == "wandb":
     init_wandb(metadata)
 
 model, tokenizer = build_model(params.model)
