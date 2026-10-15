@@ -87,36 +87,26 @@ Print derived config values at startup.
 
 ---
 
-## 4. tyro + mrunner — SOLVED, copy plan-crl
+## 4. tyro + mrunner — DONE (plan-crl's shim)
 
-Both live together via a subprocess shim. mrunner never sees tyro's flags.
+Every job: spec in `configs/` -> `mrunner_run.py` -> tyro flags ->
+`tyro.cli(<schema>)` in the entry module. mrunner never sees tyro's flags.
 
-`plan-crl/mrunner_run.py` (30 lines) — the whole trick:
-- `get_configuration()` -> flat dict
-- pops `entry_point` (selects which training script; one shim, many scripts)
-- flat dict -> CLI flags: `bool` -> `--flag` / `--no-flag`, `list` -> `--k a b c`,
-  else `--k v`
-- `subprocess.run([sys.executable, "-m", entry_point] + flags)`
-
-Config keys are **dotted** — `"llm_actor.engine_args.model_id"` -> `--llm_actor.engine_args.model_id`
--> tyro's nested-dataclass syntax. Arbitrarily nested typed config, still flat for
-mrunner sweeps.
-
-Also copy:
-- `plan-crl/mrunner_run_local.py` — runs a spec locally through the same shim, no
-  code upload, `--job-index N` for one job of a grid. Same code path local and
-  remote; replaces our `pixi run debug`.
-- `.mrunnerignore` file instead of the inline `EXCLUDE` list in `configs/toy.py`.
-- `create_experiments_helper(base_config=..., params_grid=...)` instead of
-  hand-built `Experiment`.
-- Field docstrings in the dataclasses — tyro renders them in `--help`
-  (`plan-crl/plan_crl/config/args.py`, 620 lines, good model).
-
-Add `tyro` to `pixi.toml`. Must switch cleanly between the debug model and the
-7B student (§10).
-
-**Open:** keep `nesting_prefixes` or move to dotted keys? Dotted is what makes
-tyro nesting work — probably drop the prefix scheme.
+- [x] Schemas in `src/config.py`: `MainArgs` (main.py), `TokenizeArgs`,
+  `EvalArgs`. No defaults: a missing key is a startup error. Field docstrings
+  are the `--help` text.
+- [x] Dotted keys (`train.learning_rate`) -> tyro nesting; still flat for sweeps.
+- [x] `entry_point` key picks the module; `ENTRY_POINTS` says which get one
+  process per GPU (only `main`).
+- [x] Training specs set `gpus`; `make_experiment` refuses the submit unless the
+  context's `--gres=gpu:N` matches.
+- [x] `git_*` reach the entry module as a temp JSON file
+  (`$CODING_DISTILL_GIT_FILE`): no schema has them, and the diff can outgrow
+  the 128KB argv/env string cap.
+- [ ] `plan-crl/mrunner_run_local.py` — runs a spec locally through the same
+  shim, `--job-index N` for one job of a grid.
+- [ ] `.mrunnerignore` instead of the inline `EXCLUDE` in `configs/common.py`.
+- [ ] `create_experiments_helper(base_config=..., params_grid=...)` for grids.
 
 ---
 
@@ -295,6 +285,12 @@ a `limit:` field so smoke tests take seconds.
   mrunner does for us.
 
 ## Still missing
+
+- [ ] **Next: nothing per-person in committed config** (as nano does it).
+  `clusters.yaml`'s helios contexts hard-code `plgwm5` -> `$USER` in
+  `prolog_cmd`. `storage_dir` can't take `$USER` (mrunner uploads to it
+  literally), so it stays per person. W&B already logs to the shared team
+  `ideas_cv` (`pixi.toml`).
 
 - No README. nano's is a decent template (Setup local/remote, Running, FAQ).
 - `helios`/`lem` are stubs in `clusters.yaml` — nano has working configs for both

@@ -26,13 +26,13 @@ entropy = { features = ["train", "entropy"] }
 helios-eval = { features = ["eval", "helios"] }
 
 [activation.env]
-WANDB_ENTITY = "wmasarczyk_ideas"
+WANDB_ENTITY = "ideas_cv"  # the lab's shared team, as in nano
 WANDB_PROJECT = "coding_distill"
 
 [tasks]
 # local CPU run, no backend involved
-debug = "python main.py --ex configs/train/debug.py"
-tokenize-debug = "python -m scripts.tokenize_dataset --ex configs/data/tokenize_debug.py"
+debug = "python mrunner_run.py --ex configs/train/debug.py"
+tokenize-debug = "python mrunner_run.py --ex configs/data/tokenize_debug.py"
 update-pixi = "python update_pixi.py"
 # pull args.json + LiveCodeBench outputs into out/runs for local analysis
 sync-runs = "python sync_runs.py"
@@ -54,6 +54,7 @@ transformers = "*"
 datasets = "*"
 accelerate = "*"
 wandb = "*"
+tyro = "*"
 mrunner = { git = "https://gitlab.com/awarelab/mrunner.git" }
 
 [feature.local.pypi-dependencies]
@@ -62,9 +63,16 @@ torch = "==2.13.0"
 [feature.train.pypi-dependencies]
 liger-kernel = "==0.8.4"
 transformers = "==5.18.0"  # scoped here: feature.eval needs <5 for vllm
-triton = "==3.7.1"  # the kernels Liger compiles into
 torch = { version = "==2.13.0", index = "https://download.pytorch.org/whl/cu130" }
 
+# triton: the kernels Liger compiles into. Declared once per platform -- a second
+# declaration in feature.entropy left pixi unable to call the lock up to date.
+[feature.train.target.linux-aarch64.pypi-dependencies]
+triton = "==3.7.1"  # helios: PyPI's wheel, the one helios was made to work with
+
+[feature.train.target.linux-64.pypi-dependencies]
+# entropy reaches PyPI at ~1 MB/s; the pytorch index serves the same wheel
+triton = { version = "==3.7.1", index = "https://download.pytorch.org/whl/cu130" }
 
 [feature.eval.pypi-dependencies]
 vllm = "==0.10.2"  # oldest release with an aarch64 wheel; wants torch 2.8.0
@@ -86,4 +94,3 @@ nvidia-cusolver = { version = "*", index = "https://download.pytorch.org/whl/cu1
 nvidia-cusparselt-cu13 = { version = "*", index = "https://download.pytorch.org/whl/cu130" }
 nvidia-cudnn-cu13 = { version = "*", index = "https://download.pytorch.org/whl/cu130" }
 nvidia-nccl-cu13 = { version = "*", index = "https://download.pytorch.org/whl/cu130" }
-triton = { version = "*", index = "https://download.pytorch.org/whl/cu130" }

@@ -11,7 +11,7 @@ difference.
 Identical to configs/train/sft_7b.py apart from the base model and the tokenizer, so
 the comparison isolates the starting point.
 
-`model_tokenizer`: the Math base shares a byte-identical vocabulary with the
+`model.tokenizer`: the Math base shares a byte-identical vocabulary with the
 Coder tokenizer that built the artifact, but declares eos as <|endoftext|> where
 the data closes turns with <|im_end|>. The tokenizer that produced the data is
 the authority on its special tokens, and src/model.py syncs the model's
@@ -32,35 +32,37 @@ GRADIENT_ACCUMULATION_STEPS = 32
 
 experiment = make_experiment(
     "sft_math7b",
-    dict(
-        model_name="open-r1/Qwen2.5-Math-7B-RoPE-300k",
-        model_tokenizer=TOKENIZE["tokenizer"],
-        model_pad_token="<|endoftext|>",
-        **data_params(TOKENIZE, data_dir="$DATA_DIR"),
-        train_output_dir="$RUNS_DIR",
-        train_learning_rate=4e-5,
-        train_lr_scheduler_type="cosine_with_min_lr",
-        train_lr_scheduler_kwargs={"min_lr_rate": 0.1},
-        train_warmup_steps=0.03,  # below 1 = fraction of total steps
-        train_batch_size=BATCH_SIZE,
-        train_gradient_accumulation_steps=GRADIENT_ACCUMULATION_STEPS,
-        train_num_epochs=5,
-        train_max_steps=-1,  # epochs decide the length
-        train_gradient_checkpointing=True,
-        train_sampling_strategy="group_by_length",
-        train_use_liger_kernel=True,
-        train_liger_kernel_config={"fused_linear_cross_entropy": True},
-        train_bf16=True,
-        train_logging_steps=1,
-        train_logging_first_step=True,
-        train_eval_strategy="steps",
-        train_eval_steps=60,
-        train_eval_batch_size=1,
-        train_save_steps=60,
-        train_save_total_limit=2,
-        train_report_to="wandb",
-    ),
-    script=f"torchrun --nproc_per_node={GPUS} main.py",
+    {
+        "model.name": "open-r1/Qwen2.5-Math-7B-RoPE-300k",
+        "model.tokenizer": TOKENIZE["tokenizer"],
+        "model.pad_token": "<|endoftext|>",
+        **data_params(
+            TOKENIZE, data_dir="$DATA_DIR", filter_max_tokens=None, filter_n=None
+        ),
+        "train.output_dir": "$RUNS_DIR",
+        "train.learning_rate": 4e-5,
+        "train.lr_scheduler_type": "cosine_with_min_lr",
+        "train.lr_scheduler_kwargs": {"min_lr_rate": 0.1},
+        "train.warmup_steps": 0.03,  # below 1 = fraction of total steps
+        "train.batch_size": BATCH_SIZE,
+        "train.gradient_accumulation_steps": GRADIENT_ACCUMULATION_STEPS,
+        "train.num_epochs": 5,
+        "train.max_steps": -1,  # epochs decide the length
+        "train.gradient_checkpointing": True,
+        "train.sampling_strategy": "group_by_length",
+        "train.use_liger_kernel": True,
+        "train.liger_kernel_config": {"fused_linear_cross_entropy": True},
+        "train.bf16": True,
+        "train.logging_steps": 1,
+        "train.logging_first_step": True,
+        "train.eval_strategy": "steps",
+        "train.eval_steps": 60,
+        "train.eval_batch_size": 1,
+        "train.save_steps": 60,
+        "train.save_total_limit": 2,
+        "train.report_to": "wandb",
+    },
+    gpus=GPUS,
 )
 
 experiments_list = [experiment]

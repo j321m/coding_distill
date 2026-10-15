@@ -8,7 +8,7 @@ the same decoding.
 
 from configs.common import make_experiment
 
-SCRIPT = "python -m scripts.eval_lcb"
+ENTRY_POINT = "scripts.eval_lcb"
 
 COMMON = dict(
     scenario="codegeneration",
@@ -39,6 +39,7 @@ MODELS = [
         dict(
             train_job_id="24389672",
             checkpoint="checkpoint-290",
+            model_path=None,
             model_name="sft-math7b",
         ),
     ),
@@ -46,6 +47,7 @@ MODELS = [
         "eval_lcb_openr1_distill",
         dict(
             train_job_id=BASELINES,
+            checkpoint=None,
             model_path="open-r1/OpenR1-Distill-7B",
             model_name="openr1-distill-7b",
         ),
@@ -54,6 +56,7 @@ MODELS = [
         "eval_lcb_openr1_base",
         dict(
             train_job_id=BASELINES,
+            checkpoint=None,
             model_path="open-r1/Qwen2.5-Math-7B-RoPE-300k",
             model_name="qwen2.5-math-7b-rope300k",
         ),
@@ -61,5 +64,6 @@ MODELS = [
 ]
 
 experiments_list = [
-    make_experiment(name, {**COMMON, **params}, script=SCRIPT) for name, params in MODELS
+    make_experiment(name, {**COMMON, **params}, entry_point=ENTRY_POINT)
+    for name, params in MODELS
 ]

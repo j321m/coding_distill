@@ -44,7 +44,7 @@ __all__ = [
 
 def readable_checkpoint(params, output_dir):
     """A view of the checkpoint whose tokenizer config this env can read."""
-    if params.get("model_path"):
+    if params.model_path:
         return params.model_path
 
     source = os.path.join(

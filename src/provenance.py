@@ -8,6 +8,12 @@ from importlib.metadata import PackageNotFoundError, version
 
 from munch import unmunchify
 
+# configs/common.py injects these into the parameters; mrunner_run.py moves them
+# into a JSON file named by GIT_ENV, since the entry points' tyro schemas
+# (src/config.py) have no such fields
+GIT_KEYS = ("git_commit", "git_dirty", "git_diff")
+GIT_ENV = "CODING_DISTILL_GIT_FILE"
+
 # Dumped into args.json and into `wandb.config` under `job`. One list, two
 # consumers, so the run dir and the wandb page cannot disagree.
 JOB_ENV_KEYS = (
@@ -55,6 +61,15 @@ def _versions():
         except PackageNotFoundError:
             installed[package] = None
     return installed
+
+
+def load_git():
+    """The `git_*` keys mrunner_run.py set aside; all None without it."""
+    path = os.environ.get(GIT_ENV)
+    if path is None:
+        return dict.fromkeys(GIT_KEYS)
+    with open(path) as file:
+        return json.load(file)
 
 
 def write_run_metadata(output_dir, params):
