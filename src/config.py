@@ -76,9 +76,7 @@ class TrainArgs:
     sampling_strategy: Literal["random", "group_by_length"]
     """Train sampler; `group_by_length` reads the dataset's `length` column."""
     use_liger_kernel: bool
-    """Patch the model with Liger kernels (CUDA only)."""
-    liger_kernel_config: Optional[dict[str, bool]]
-    """Per-op Liger flags: rope, rms_norm, swiglu, fused_linear_cross_entropy."""
+    """Patch the model with Liger's default kernels (CUDA only)."""
     bf16: bool
     """bf16 mixed precision; off on CPU."""
     logging_steps: int

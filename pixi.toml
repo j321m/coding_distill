@@ -26,7 +26,7 @@ entropy = { features = ["train", "entropy"] }
 helios-eval = { features = ["eval", "helios"] }
 
 [activation.env]
-WANDB_ENTITY = "ideas_cv"  # the lab's shared team, as in nano
+WANDB_ENTITY = "ideascv_llms"  # the lab's shared team, as in nano
 WANDB_PROJECT = "coding_distill"
 
 [tasks]

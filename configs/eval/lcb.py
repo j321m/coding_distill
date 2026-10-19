@@ -8,8 +8,6 @@ the same decoding.
 
 from configs.common import make_experiment
 
-ENTRY_POINT = "scripts.eval_lcb"
-
 COMMON = dict(
     scenario="codegeneration",
     release_version="release_v6",
@@ -64,6 +62,6 @@ MODELS = [
 ]
 
 experiments_list = [
-    make_experiment(name, {**COMMON, **params}, entry_point=ENTRY_POINT)
+    make_experiment(name, {**COMMON, **params}, entry_point="scripts.eval_lcb")
     for name, params in MODELS
 ]

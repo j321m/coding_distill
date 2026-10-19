@@ -14,7 +14,6 @@ no-ops silently on an unsupported architecture:
 from configs.common import data_params, make_experiment
 from configs.data.tokenize import TOKENIZE
 
-# effective batch 512: 4 GPUs x 1 x 128, what past `sft` runs trained with
 GPUS = 4
 BATCH_SIZE = 1
 GRADIENT_ACCUMULATION_STEPS = 128
@@ -40,9 +39,6 @@ experiment = make_experiment(
         "train.gradient_checkpointing": True,
         "train.sampling_strategy": "group_by_length",
         "train.use_liger_kernel": True,
-        # `fused_linear_cross_entropy` produces NaN gradients; the
-        # remaining rope/rms_norm/swiglu kernels are worth ~22% speedups
-        "train.liger_kernel_config": {"fused_linear_cross_entropy": False},
         "train.bf16": True,
         "train.logging_steps": 1,
         "train.logging_first_step": True,

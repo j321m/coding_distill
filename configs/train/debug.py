@@ -30,7 +30,6 @@ experiment = make_experiment(
         "train.gradient_checkpointing": False,
         "train.sampling_strategy": "random",
         "train.use_liger_kernel": False,  # CUDA only
-        "train.liger_kernel_config": None,
         "train.bf16": False,
         "train.logging_steps": 1,
         "train.logging_first_step": False,

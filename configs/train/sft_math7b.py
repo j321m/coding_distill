@@ -51,7 +51,6 @@ experiment = make_experiment(
         "train.gradient_checkpointing": True,
         "train.sampling_strategy": "group_by_length",
         "train.use_liger_kernel": True,
-        "train.liger_kernel_config": {"fused_linear_cross_entropy": True},
         "train.bf16": True,
         "train.logging_steps": 1,
         "train.logging_first_step": True,

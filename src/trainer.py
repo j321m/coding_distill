@@ -17,8 +17,6 @@ def train(model, tokenizer, train_dataset, eval_dataset, params, output_dir):
         warmup_steps=params.warmup_steps,
         gradient_checkpointing=params.gradient_checkpointing,
         use_liger_kernel=params.use_liger_kernel,
-        # per-op flags: rope, rms_norm, swiglu, fused_linear_cross_entropy
-        liger_kernel_config=params.liger_kernel_config,
         logging_steps=params.logging_steps,
         logging_first_step=params.logging_first_step,
         save_steps=params.save_steps,

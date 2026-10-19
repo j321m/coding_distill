@@ -47,11 +47,10 @@ experiment = make_experiment(
         "train.max_steps": -1,  # epochs decide the length
         "train.gradient_checkpointing": True,
         "train.sampling_strategy": "group_by_length",
+        # on at 7B: without its fused cross-entropy the fp32 logits are 19.9GB
+        # (32k x 152064) plus as much again for their gradient, which is the
+        # difference between fitting on one card and not
         "train.use_liger_kernel": True,
-        # on at 7B: without it the fp32 logits are 19.9GB (32k x 152064) plus
-        # as much again for their gradient, which is the difference between
-        # fitting on one card and not
-        "train.liger_kernel_config": {"fused_linear_cross_entropy": True},
         "train.bf16": True,
         "train.logging_steps": 1,
         "train.logging_first_step": True,
