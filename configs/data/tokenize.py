@@ -3,7 +3,7 @@
 pixi run mrun --context helios run configs/data/tokenize.py
 """
 
-from configs.common import make_experiment
+from configs.common import data_params, make_experiment
 
 TOKENIZE = dict(
     dataset="open-r1/codeforces-cots",
@@ -18,8 +18,13 @@ TOKENIZE = dict(
 
 experiment = make_experiment(
     "tokenize",
-    dict(**TOKENIZE, data_dir="$DATA_DIR", num_proc=64),
-    script="python -m scripts.tokenize_dataset",
+    {
+        **data_params(
+            TOKENIZE, data_dir="$DATA_DIR", filter_max_tokens=None, filter_n=None
+        ),
+        "num_proc": 64,
+    },
+    entry_point="scripts.tokenize_dataset",
 )
 
 experiments_list = [experiment]

@@ -8,13 +8,15 @@ task, `CodeQwenInstruct` is not think-aware, and `DeepSeekR1` emits DeepSeek
 tokens absent from Qwen's vocabulary.
 """
 
+import dataclasses
 import json
 import os
 import sys
 
-from mrunner.helpers.client_helper import get_configuration
+import tyro
 from transformers import AutoTokenizer
 
+from src.config import EvalArgs
 from src.lcb import (
     build_prompt_benchmark,
     get_args,
@@ -24,7 +26,7 @@ from src.lcb import (
     readable_checkpoint,
 )
 from src.lcb_eval_prompts import CODE_FENCE, build_sft_template
-from src.provenance import write_run_metadata
+from src.provenance import load_git, write_run_metadata
 from src.tracking import init_wandb
 
 
@@ -96,8 +98,8 @@ def lcb_argv(model_repr, checkpoint, params):
     ]
 
 
-params = get_configuration()
-model_repr = params.get("model_name") or f"coding-distill-{params.train_job_id}"
+params = tyro.cli(EvalArgs)
+model_repr = params.model_name or f"coding-distill-{params.train_job_id}"
 # LiveCodeBench writes to relative `output/` and `cache/`, which would land in
 # the mrunner code snapshot on $HOME. Put them next to the checkpoint instead.
 output_dir = os.path.join(
@@ -108,8 +110,8 @@ os.makedirs(output_dir, exist_ok=True)
 checkpoint = readable_checkpoint(params, output_dir)
 tokenizer = AutoTokenizer.from_pretrained(checkpoint)
 
-metadata = write_run_metadata(output_dir, params)
-run = init_wandb(metadata) if "wandb" in params.get("report_to", "none") else None
+metadata = write_run_metadata(output_dir, {**dataclasses.asdict(params), **load_git()})
+run = init_wandb(metadata) if params.report_to == "wandb" else None
 os.chdir(output_dir)
 
 install_prompt_style(model_repr, checkpoint, build_sft_template(tokenizer))

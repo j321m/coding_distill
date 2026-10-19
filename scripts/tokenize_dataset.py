@@ -1,38 +1,40 @@
 """Pre-tokenize a CoT dataset into a training-ready artifact.
 
 pixi run mrun --context helios run configs/data/tokenize.py
-pixi run python -m scripts.tokenize_dataset --ex configs/data/tokenize_debug.py
+pixi run tokenize-debug
 """
 
 import os
 import shutil
 
+import tyro
 from datasets import load_dataset
-from mrunner.helpers.client_helper import get_configuration
 from transformers import AutoTokenizer
 
+from src.config import TokenizeArgs
 from src.dataset import artifact_path, write_meta
 
-params = get_configuration()
+args = tyro.cli(TokenizeArgs)
+params = args.data
 
 tokenizer = AutoTokenizer.from_pretrained(params.tokenizer)
 dataset = load_dataset(params.dataset, params.config, split=params.split)
 
-if params.get("drop_finish_reason"):
+if params.drop_finish_reason:
     dataset = dataset.filter(
         lambda reason: reason != params.drop_finish_reason,
         input_columns="finish_reason",
-        num_proc=params.num_proc,
+        num_proc=args.num_proc,
     )
 
-if params.get("filter_max_tokens"):
+if params.filter_max_tokens:
     # R1's token counts -- a proxy, used only to bound the debug subset
     dataset = dataset.filter(
         lambda meta: meta["total_tokens"] <= params.filter_max_tokens,
         input_columns="api_metadata",
-        num_proc=params.num_proc,
+        num_proc=args.num_proc,
     )
-if params.get("filter_n"):
+if params.filter_n:
     dataset = dataset.select(range(min(params.filter_n, len(dataset))))
 
 
@@ -68,7 +70,7 @@ dataset = dataset.map(
     tokenize,
     input_columns="messages",
     remove_columns=dataset.column_names,
-    num_proc=params.num_proc,
+    num_proc=args.num_proc,
 )
 # Arrow infers int64 for labels, doubling that column against int32 input_ids
 dataset = dataset.cast_column("labels", dataset.features["input_ids"])
