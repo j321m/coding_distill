@@ -1,8 +1,8 @@
 #!/usr/bin/env python
 """Pull run metadata and eval outputs off a cluster, for local analysis.
 
-    pixi run python sync_runs.py --context helios
-    pixi run python sync_runs.py --context helios --dry-run
+pixi run python sync_runs.py --context helios
+pixi run python sync_runs.py --context helios --dry-run
 """
 
 import argparse
@@ -21,7 +21,9 @@ FILTERS = [
 
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--context", required=True, help="context name in clusters.yaml")
+    parser.add_argument(
+        "--context", required=True, help="context name in clusters.yaml"
+    )
     parser.add_argument("--config", default="clusters.yaml")
     parser.add_argument("--dest", default="out/runs", help="local destination")
     parser.add_argument("--dry-run", action="store_true")
@@ -33,9 +35,13 @@ def main() -> None:
     env_setup = env_setup_lines(context.get("prolog_cmd") or "")
 
     with connect_with_passphrase(host=host, inline_ssh_env=True) as connection:
-        runs_dir = connection.run(f"{env_setup}\necho $RUNS_DIR", hide=True).stdout.strip()
+        runs_dir = connection.run(
+            f"{env_setup}\necho $RUNS_DIR", hide=True
+        ).stdout.strip()
     if not runs_dir or "$" in runs_dir:
-        raise SystemExit(f"could not resolve RUNS_DIR from {args.context}: {runs_dir!r}")
+        raise SystemExit(
+            f"could not resolve RUNS_DIR from {args.context}: {runs_dir!r}"
+        )
 
     dest = project_root / args.dest
     dest.mkdir(parents=True, exist_ok=True)

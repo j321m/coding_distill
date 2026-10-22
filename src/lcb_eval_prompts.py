@@ -41,6 +41,7 @@ CODE_FENCE = re.compile(r"```python", re.IGNORECASE)
 
 def build_sft_template(tokenizer):
     """The question -> prompt function LiveCodeBench should call."""
+
     def sft_question_template(question):
         """Branches on `starter_code` the way every upstream template does."""
         body = (

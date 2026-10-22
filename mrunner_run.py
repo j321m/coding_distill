@@ -45,7 +45,14 @@ if __name__ == "__main__":
     # one process per GPU (DDP); a single process on several GPUs makes
     # Trainer fall back to DataParallel, which gathers all logits on GPU 0.
     if ENTRY_POINTS[module] and gpus > 1:
-        launcher = ["-m", "torch.distributed.run", f"--nproc-per-node={gpus}"]
+        # --tee 3: prefix every stdout/stderr line with the rank that wrote it
+        launcher = [
+            "-m",
+            "torch.distributed.run",
+            f"--nproc-per-node={gpus}",
+            "--tee",
+            "3",
+        ]
     else:
         launcher = []
     cmd = [sys.executable, *launcher, "-m", module] + flags

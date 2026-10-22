@@ -20,7 +20,7 @@ is what assert_meta_matches compares, while the model is 7B.
 """
 
 from configs.common import data_params, make_experiment
-from configs.data.tokenize import TOKENIZE   
+from configs.data.tokenize import TOKENIZE
 
 # effective batch 128, matching configs/train/sft.py: 4 GPUs x 1 x 32.
 GPUS = 4

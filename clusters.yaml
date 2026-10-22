@@ -8,6 +8,7 @@ contexts:
     # absolute + literal only: relative breaks the untar, $HOME/~ break the SFTP upload
     storage_dir: /home/j321m/coding_distill
     cmd_type: sbatch
+    time: "2-00:00:00"
 
     sbatch_options:
       - "--partition=h100"
@@ -15,7 +16,6 @@ contexts:
       - "--gres=gpu:4"
       - "--cpus-per-gpu=14"
       - "--mem-per-gpu=90G"
-      - "--time=2-00:00:00"
 
     prolog_cmd: |
       export PROJECT_HOME_PATH=/storage_nvme_4/coding_distill
