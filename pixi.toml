@@ -24,6 +24,7 @@ default = { features = ["local"] }
 helios  = { features = ["train", "helios"] }
 entropy = { features = ["train", "entropy"] }
 helios-eval = { features = ["eval", "helios"] }
+entropy-eval = { features = ["eval", "entropy"] }
 
 [activation.env]
 WANDB_ENTITY = "ideascv_llms"  # the lab's shared team, as in nano
@@ -71,8 +72,16 @@ torch = { version = "==2.13.0", index = "https://download.pytorch.org/whl/cu130"
 triton = "==3.7.1"  # helios: PyPI's wheel, the one helios was made to work with
 
 [feature.train.target.linux-64.pypi-dependencies]
-# entropy reaches PyPI at ~1 MB/s; the pytorch index serves the same wheel
+# entropy reaches PyPI at ~1 MB/s; the pytorch index serves the same wheels 50x
+# faster. So triton and torch's CUDA deps, which x86 torch pulls off PyPI, are
+# redeclared here only to fetch them from there.
 triton = { version = "==3.7.1", index = "https://download.pytorch.org/whl/cu130" }
+nvidia-cublas = { version = "*", index = "https://download.pytorch.org/whl/cu130" }
+nvidia-cufft = { version = "*", index = "https://download.pytorch.org/whl/cu130" }
+nvidia-cusolver = { version = "*", index = "https://download.pytorch.org/whl/cu130" }
+nvidia-cusparselt-cu13 = { version = "*", index = "https://download.pytorch.org/whl/cu130" }
+nvidia-cudnn-cu13 = { version = "*", index = "https://download.pytorch.org/whl/cu130" }
+nvidia-nccl-cu13 = { version = "*", index = "https://download.pytorch.org/whl/cu130" }
 
 [feature.eval.pypi-dependencies]
 vllm = "==0.10.2"  # oldest release with an aarch64 wheel; wants torch 2.8.0
@@ -85,12 +94,12 @@ datasets = "<4"  # 4.0 dropped loading scripts; code_generation_lite is one
 anthropic = "<1"  # lcb_runner.prompts imports HUMAN_PROMPT/AI_PROMPT at module scope
 pebble = "*"  # lcb_runner.evaluation's process pool
 
-[feature.entropy.pypi-dependencies]
-# torch's CUDA deps, redeclared only to fetch them off PyPI, which entropy
-# reaches at ~1 MB/s -- the pytorch index serves the same wheels 50x faster
-nvidia-cublas = { version = "*", index = "https://download.pytorch.org/whl/cu130" }
-nvidia-cufft = { version = "*", index = "https://download.pytorch.org/whl/cu130" }
-nvidia-cusolver = { version = "*", index = "https://download.pytorch.org/whl/cu130" }
-nvidia-cusparselt-cu13 = { version = "*", index = "https://download.pytorch.org/whl/cu130" }
-nvidia-cudnn-cu13 = { version = "*", index = "https://download.pytorch.org/whl/cu130" }
-nvidia-nccl-cu13 = { version = "*", index = "https://download.pytorch.org/whl/cu130" }
+[feature.eval.target.linux-64.pypi-dependencies]
+# the same redeclaration as for training, for torch 2.8's CUDA 12 deps
+nvidia-cublas-cu12 = { version = "*", index = "https://download.pytorch.org/whl/cu129" }
+nvidia-cufft-cu12 = { version = "*", index = "https://download.pytorch.org/whl/cu129" }
+nvidia-cusolver-cu12 = { version = "*", index = "https://download.pytorch.org/whl/cu129" }
+nvidia-cusparse-cu12 = { version = "*", index = "https://download.pytorch.org/whl/cu129" }
+nvidia-cusparselt-cu12 = { version = "*", index = "https://download.pytorch.org/whl/cu129" }
+nvidia-cudnn-cu12 = { version = "*", index = "https://download.pytorch.org/whl/cu129" }
+nvidia-nccl-cu12 = { version = "*", index = "https://download.pytorch.org/whl/cu129" }
