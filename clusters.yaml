@@ -8,6 +8,8 @@ contexts:
     # absolute + literal only: relative breaks the untar, $HOME/~ break the SFTP upload
     storage_dir: /home/j321m/coding_distill
     cmd_type: sbatch
+    # mrunner's own key, not an sbatch option: it always passes `sbatch -t <time>`
+    # (default 30 minutes), which overrides an #SBATCH --time line
     time: "2-00:00:00"
 
     sbatch_options:
