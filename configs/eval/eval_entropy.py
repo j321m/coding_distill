@@ -1,6 +1,6 @@
 """LiveCodeBench evaluation: one job per entry in MODELS.
 
-    pixi run mrun --context helios-eval run configs/eval/lcb.py
+    pixi run mrun --context entropy-eval run configs/eval/eval_entropy.py
 
 All entries share COMMON, so the models are scored on the same problem set with
 the same decoding.
