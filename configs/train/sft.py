@@ -35,7 +35,7 @@ experiment = make_experiment(
         "train.batch_size": BATCH_SIZE,
         "train.gradient_accumulation_steps": GRADIENT_ACCUMULATION_STEPS,
         "train.num_epochs": 1,
-        "train.max_steps": 5,  # epochs decide the length
+        "train.max_steps": -1,  # epochs decide the length
         "train.gradient_checkpointing": True,
         "train.sampling_strategy": "group_by_length",
         "train.use_liger_kernel": True,
