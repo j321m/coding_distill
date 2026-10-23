@@ -125,7 +125,7 @@ src/model.py      DELETE now, re-create for custom architectures
 
 ## 6. wandb
 
-- Entity `ideas_cv`.
+- Entity `ideascv_llms`.
 - Log full resolved config. **§4 before §6.**
 - **Offline vs online is cluster-dependent** — nano runs online on entropy;
   plan-crl uses `wandb_osh.TriggerWandbSyncHook` offline. Check entropy egress,
@@ -290,7 +290,7 @@ a `limit:` field so smoke tests take seconds.
   `clusters.yaml`'s helios contexts hard-code `plgwm5` -> `$USER` in
   `prolog_cmd`. `storage_dir` can't take `$USER` (mrunner uploads to it
   literally), so it stays per person. W&B already logs to the shared team
-  `ideas_cv` (`pixi.toml`).
+  `ideascv_llms` (`pixi.toml`).
 
 - No README. nano's is a decent template (Setup local/remote, Running, FAQ).
 - `helios`/`lem` are stubs in `clusters.yaml` — nano has working configs for both
