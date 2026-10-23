@@ -6,6 +6,11 @@ import time
 import torch
 from transformers import TrainerCallback
 
+try:
+    import psutil
+except ImportError:  # host memory is optional; GPU metrics still report
+    psutil = None
+
 BYTES_PER_GB = 1024**3
 TOKENS_KEY = "num_input_tokens_seen"
 
@@ -62,6 +67,13 @@ class ThroughputCallback(TrainerCallback):
                 self._last_tokens = tokens
 
         self._last_time = now
+
+        # host RSS, because the cgroup OOM killer counts this and not GPU memory;
+        # a linear climb here is a leak, a flat line with spikes is transient
+        if psutil is not None:
+            metrics["train/host_mem_rss_gb"] = (
+                psutil.Process().memory_info().rss / BYTES_PER_GB
+            )
 
         if torch.cuda.is_available():  # absent on the local MPS/CPU path
             # high water says how close the job is to OOM, the interval peak

@@ -49,6 +49,24 @@ def data_params(tokenize_params, **extra):
     return {f"data_{key}": value for key, value in {**tokenize_params, **extra}.items()}
 
 
+def torchrun(gpus_per_node, script="main.py"):
+    """Launch `script` on every GPU of every node in the allocation.
+
+    `srun` because an sbatch body only runs on the first node, so torchrun alone
+    would leave the rest idle. MASTER_ADDR/MASTER_PORT come from prolog_cmd,
+    which is where the node list is visible.
+    """
+    return (
+        "srun torchrun"
+        " --nnodes=$SLURM_NNODES"
+        " --node_rank=$SLURM_NODEID"
+        f" --nproc_per_node={gpus_per_node}"
+        " --rdzv_backend=c10d"
+        " --rdzv_endpoint=$MASTER_ADDR:$MASTER_PORT"
+        f" {script}"
+    )
+
+
 def make_experiment(name, parameters, script="python main.py", **kwargs):
     """Build an `Experiment` with the invariants filled in.
 

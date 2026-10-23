@@ -17,13 +17,13 @@ is what assert_meta_matches compares, while the model is 7B.
     pixi run mrun --context helios run configs/train/sft_7b.py
 """
 
-from configs.common import data_params, make_experiment
+from configs.common import data_params, make_experiment, torchrun
 from configs.data.tokenize import TOKENIZE   
 
-# effective batch 128, matching configs/train/sft.py: 4 GPUs x 1 x 32.
-GPUS = 4
+# effective batch 128: 2 nodes x 4 GPUs x 1 x 16.
+GPUS_PER_NODE = 4  # node count comes from --nodes in clusters.yaml
 BATCH_SIZE = 1
-GRADIENT_ACCUMULATION_STEPS = 32
+GRADIENT_ACCUMULATION_STEPS = 16
 
 experiment = make_experiment(
     "sft_7b",
@@ -59,7 +59,7 @@ experiment = make_experiment(
         train_save_total_limit=2,
         train_report_to="wandb",
     ),
-    script=f"torchrun --nproc_per_node={GPUS} main.py",
+    script=torchrun(GPUS_PER_NODE),
 )
 
 experiments_list = [experiment]

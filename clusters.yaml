@@ -46,16 +46,17 @@ contexts:
     # absolute + literal only: relative breaks the untar, $HOME/~ break the SFTP upload
     storage_dir: /net/storage/pr3/plgrid/plggideascv/plgwm5/coding_distill
     cmd_type: sbatch
-    time: "20:00:00"
+    time: "28:00:00"
+    nodes: 2
 
     sbatch_options:
       - "--partition=plgrid-gpu-gh200"
       - "--account=plgideascvgroup1-gpu-gh200"
-      - "--nodes=1"
       - "--gres=gpu:4"
-      - "--ntasks=1"
+      # one torchrun per node, which then forks a process per GPU
+      - "--ntasks-per-node=1"
       - "--cpus-per-task=72"
-      - "--mem=200G"
+      - "--mem=0"
 
     prolog_cmd: |
       export USER_STORAGE=/net/storage/pr3/plgrid/plggideascv/plgwm5
@@ -64,6 +65,17 @@ contexts:
       # pre-tokenized datasets, written by scripts/tokenize_dataset.py
       export DATA_DIR=$PROJECT_HOME_PATH/data
       export HF_HOME=$PROJECT_HOME_PATH/hf_cache
+
+      # sbatch exports the submitting PATH, which points at the login nodes'
+      # Slurm build (el8/x86_64). These compute nodes are el9/aarch64, so srun
+      # and scontrol would die with "Exec format error".
+      SLURM_BIN=/net/slurm/releases/production.el9.$(uname -m)/bin
+      [ -x "$SLURM_BIN/srun" ] || echo "WARNING: no srun at $SLURM_BIN" >&2
+      export PATH="$SLURM_BIN:$PATH"
+
+      # torchrun rendezvous: every node has to agree on the same host and port
+      export MASTER_ADDR=$(scontrol show hostnames "$SLURM_JOB_NODELIST" | head -n1)
+      export MASTER_PORT=$((20000 + SLURM_JOB_ID % 20000))
 
       # pixi env lives outside of $HOME, together with its caches
       export PIXI_HOME=$PROJECT_HOME_PATH/pixi
@@ -75,7 +87,10 @@ contexts:
       export RATTLER_CACHE_DIR="$XDG_CACHE_HOME/rattler"
       export UV_CACHE_DIR="$XDG_CACHE_HOME/uv"
       export PIXI_CACHE_DIR="$XDG_CACHE_HOME/pixi"
-      export TRITON_CACHE_DIR=$XDG_CACHE_HOME/triton
+      # per job, not per node: prolog_cmd runs once on the first node and srun
+      # inherits it already expanded, so $SLURMD_NODENAME would be the same string
+      # everywhere. Per job still keeps concurrent jobs off each other's cache.
+      export TRITON_CACHE_DIR=$XDG_CACHE_HOME/triton/$SLURM_JOB_ID
       # wandb run dirs default to $PWD -- which is the mrunner code snapshot on
       # $HOME. Runs land in $WANDB_DIR/wandb/run-*, caches follow XDG above.
       export WANDB_DIR=$PROJECT_HOME_PATH

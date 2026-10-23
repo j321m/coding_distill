@@ -5,9 +5,10 @@ pixi run python -m scripts.tokenize_dataset --ex configs/data/tokenize_debug.py
 """
 
 import os
+import random
 import shutil
 
-from datasets import load_dataset
+from datasets import DatasetDict, load_dataset
 from mrunner.helpers.client_helper import get_configuration
 from transformers import AutoTokenizer
 
@@ -64,25 +65,32 @@ def tokenize(messages):
     }
 
 
-dataset = dataset.map(
+def split_by_problem(dataset):
+    """Hold out whole problems, not rows.
+
+    The C++ configs carry five traces per problem, so a row-wise split would put
+    the same problem on both sides and the eval loss would measure memorisation.
+    """
+    ids = sorted(set(dataset["id"]))
+    random.Random(params.split_seed).shuffle(ids)
+    held_out = set(ids[: max(1, round(len(ids) * params.test_size))])
+    is_test = [problem in held_out for problem in dataset["id"]]
+    return DatasetDict(
+        train=dataset.select([i for i, t in enumerate(is_test) if not t]),
+        test=dataset.select([i for i, t in enumerate(is_test) if t]),
+    )
+
+
+# split before tokenizing: `id` is among the columns the map drops
+splits = split_by_problem(dataset)
+splits = splits.map(
     tokenize,
     input_columns="messages",
     remove_columns=dataset.column_names,
     num_proc=params.num_proc,
 )
 # Arrow infers int64 for labels, doubling that column against int32 input_ids
-dataset = dataset.cast_column("labels", dataset.features["input_ids"])
-
-# A random split only holds because the `_py` subsets carry one completion per
-# problem. The C++ configs hold up to five traces each, so the same problem would
-# land on both sides and the eval loss would be measuring memorisation.
-assert "_py" in params.config, (
-    f"{params.config!r} has multiple traces per problem; a random split leaks "
-    "across train/eval. Split by problem id before using this config."
-)
-dataset = dataset.train_test_split(
-    test_size=params.test_size, seed=params.split_seed, shuffle=True
-)
+dataset = splits.cast_column("labels", splits["train"].features["input_ids"])
 
 path = artifact_path(params)
 staging = f"{path}.staging"
