@@ -48,11 +48,6 @@ def _git_info():
         return None, None, ""  # e.g. a config re-run from inside the snapshot
 
 
-def data_params(tokenize_params, **extra):
-    """Prefix a tokenize config for src/config.py's `DataArgs`."""
-    return {f"data.{key}": value for key, value in {**tokenize_params, **extra}.items()}
-
-
 def _context_gpus():
     """GPUs the mrunner context being submitted to requests (`--gres=gpu:N` in
     its sbatch_options); None outside `mrunner run`, e.g. `pixi run debug`."""
