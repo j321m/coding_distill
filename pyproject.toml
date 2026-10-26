@@ -1,0 +1,4 @@
+# black's settings only; the project itself is configured in pixi.toml
+[tool.black]
+# vendored LiveCodeBench, kept in its upstream formatting
+extend-exclude = "^/third_party/"
