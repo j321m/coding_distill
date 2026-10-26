@@ -2,7 +2,7 @@
 
 contexts:
 
-  entropy:
+  entropy: &entropy
     backend_type: slurm
     slurm_url: entropy
     # absolute + literal only: relative breaks the untar, $HOME/~ break the SFTP upload
@@ -50,7 +50,7 @@ contexts:
       # activate the out-of-tree env
       eval "$(pixi shell-hook -e entropy --manifest-path "$PIXI_HOME/pixi.toml")"
 
-  helios:
+  helios: &helios
     backend_type: slurm
     slurm_url: helios
     # absolute + literal only: relative breaks the untar, $HOME/~ break the SFTP upload
@@ -98,16 +98,54 @@ contexts:
       eval "$(pixi shell-hook -e helios --manifest-path "$PIXI_HOME/pixi.toml")"
 
   # LiveCodeBench runs against a 2024-era torch/vllm stack that cannot share an
-  # env with the cu130 training build, so it gets its own. Identical to `helios`
-  # apart from the environment it activates; the name must match the pixi
-  # environment, because update_pixi.py installs `-e <context>`.
-  helios-eval:
-    backend_type: slurm
-    slurm_url: helios
-    storage_dir: /net/storage/pr3/plgrid/plggideascv/plgwm5/coding_distill
-    cmd_type: sbatch
+  # env with the cu130 training build, so each cluster has a `<cluster>-eval`
+  # context: the training one with a single GPU and its own pixi environment.
+  # The context name must match that environment, because update_pixi.py
+  # installs `-e <context>`. prolog_cmd is repeated in full because it names
+  # the environment to activate, and YAML cannot override part of a string.
+  entropy-eval:
+    <<: *entropy
     time: "01:30:00"
+    sbatch_options:
+      - "--partition=h100"
+      - "--nodes=1"
+      - "--gres=gpu:1"
+      - "--cpus-per-gpu=14"
+      - "--mem-per-gpu=90G"
+    prolog_cmd: |
+      export PROJECT_HOME_PATH=/storage_nvme_4/coding_distill
+      export HF_HOME=$PROJECT_HOME_PATH/hf_cache
 
+      # pixi env lives outside of $HOME, together with its caches
+      export PIXI_HOME=$PROJECT_HOME_PATH/$USER/pixi
+      export PATH="$HOME/.pixi/bin:$PATH"
+      export XDG_DATA_HOME="$PIXI_HOME/data"
+      export XDG_CACHE_HOME="$PIXI_HOME/cache"
+      export XDG_STATE_HOME="$PIXI_HOME/state"
+      export RATTLER_CACHE_DIR="$XDG_CACHE_HOME/rattler"
+      export UV_CACHE_DIR="$XDG_CACHE_HOME/uv"
+      export PIXI_CACHE_DIR="$XDG_CACHE_HOME/pixi"
+
+      export XDG_CONFIG_HOME="$PIXI_HOME/config"
+      export TRITON_CACHE_DIR=$XDG_CACHE_HOME/triton
+
+      export RUNS_DIR=$PROJECT_HOME_PATH/$USER/runs
+      # pre-tokenized datasets, written by scripts/tokenize_dataset.py; shared
+      export DATA_DIR=$PROJECT_HOME_PATH/data
+      # wandb run dirs default to $PWD -- which is the mrunner code snapshot on
+      # $HOME. Runs land in $WANDB_DIR/wandb/run-*, caches follow XDG above.
+      export WANDB_DIR=$PROJECT_HOME_PATH/$USER
+      export WANDB_ARTIFACT_DIR=$PROJECT_HOME_PATH/$USER/wandb_artifacts
+
+      # per-user secrets (WANDB_API_KEY, HF_TOKEN), never committed
+      [ -f ~/.coding_distill_env ] && source ~/.coding_distill_env
+
+      # activate the out-of-tree env
+      eval "$(pixi shell-hook -e entropy-eval --manifest-path "$PIXI_HOME/pixi.toml")"
+
+  helios-eval:
+    <<: *helios
+    time: "01:30:00"
     sbatch_options:
       - "--partition=plgrid-gpu-gh200"
       - "--account=plgideascvgroup1-gpu-gh200"
@@ -115,14 +153,15 @@ contexts:
       - "--gres=gpu:1"
       - "--cpus-per-task=72"
       - "--mem=120G"
-
     prolog_cmd: |
       export USER_STORAGE=/net/storage/pr3/plgrid/plggideascv/plgwm5
       export PROJECT_HOME_PATH=/net/storage/pr3/plgrid/plggideascv/plgwm5/coding_distill
       export RUNS_DIR=$PROJECT_HOME_PATH/runs
+      # pre-tokenized datasets, written by scripts/tokenize_dataset.py
       export DATA_DIR=$PROJECT_HOME_PATH/data
       export HF_HOME=$PROJECT_HOME_PATH/hf_cache
 
+      # pixi env lives outside of $HOME, together with its caches
       export PIXI_HOME=$PROJECT_HOME_PATH/pixi
       export PATH="$USER_STORAGE/.pixi/bin:$PATH"
       export XDG_DATA_HOME="$PIXI_HOME/data"
@@ -133,14 +172,16 @@ contexts:
       export UV_CACHE_DIR="$XDG_CACHE_HOME/uv"
       export PIXI_CACHE_DIR="$XDG_CACHE_HOME/pixi"
       export TRITON_CACHE_DIR=$XDG_CACHE_HOME/triton
+      # wandb run dirs default to $PWD -- which is the mrunner code snapshot on
+      # $HOME. Runs land in $WANDB_DIR/wandb/run-*, caches follow XDG above.
       export WANDB_DIR=$PROJECT_HOME_PATH
       export WANDB_ARTIFACT_DIR=$PROJECT_HOME_PATH/wandb_artifacts
 
       # per-user secrets (WANDB_API_KEY, HF_TOKEN), never committed
       [ -f ~/.coding_distill_env ] && source ~/.coding_distill_env
 
+      # activate the out-of-tree env
       eval "$(pixi shell-hook -e helios-eval --manifest-path "$PIXI_HOME/pixi.toml")"
-
 
   lem:
     backend_type: slurm
