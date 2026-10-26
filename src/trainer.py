@@ -42,6 +42,9 @@ def train(model, tokenizer, train_dataset, eval_dataset, params, output_dir):
         lr_scheduler_kwargs=params.get("lr_scheduler_kwargs", None),
         warmup_steps=params.get("warmup_steps", 0),
         gradient_checkpointing=params.get("gradient_checkpointing", False),
+        # True enables FSDP; the sharding strategy itself lives in fsdp_config
+        fsdp=params.get("fsdp", False),
+        fsdp_config=params.get("fsdp_config", None),
         max_grad_norm=params.get("max_grad_norm", 1.0),
         use_liger_kernel=params.get("use_liger_kernel", False),
         # per-op flags: rope, rms_norm, swiglu, fused_linear_cross_entropy
