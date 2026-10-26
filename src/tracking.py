@@ -11,6 +11,10 @@ def init_wandb(metadata):
     import wandb
 
     run = wandb.init(
+        # `sft_7b-29047`: the spec it ran, and the SLURM job -- the run dir for
+        # training, the job's log for an eval
+        name=f"{metadata['params']['experiment_name']}-"
+        f"{metadata['job']['SLURM_JOB_ID'] or 'local'}",
         config={key: metadata[key] for key in ("params", "job", "git", "versions")},
     )
     wandb.define_metric("train/num_input_tokens_seen")

@@ -110,6 +110,8 @@ ENTRY_POINTS = {
 class MainArgs:
     """main.py: fine-tune a model on a pre-tokenized artifact."""
 
+    experiment_name: str
+    """The spec's name in configs/, set by make_experiment; names the wandb run."""
     model: ModelArgs
     data: DataArgs
     train: TrainArgs
@@ -119,6 +121,8 @@ class MainArgs:
 class TokenizeArgs:
     """scripts/tokenize_dataset.py: build the artifact main.py reads."""
 
+    experiment_name: str
+    """The spec's name in configs/, set by make_experiment; unused here."""
     data: DataArgs
     num_proc: int
     """Worker processes for the filter/map passes."""
@@ -128,6 +132,8 @@ class TokenizeArgs:
 class EvalArgs:
     """scripts/eval_lcb.py: score a checkpoint on LiveCodeBench."""
 
+    experiment_name: str
+    """The spec's name in configs/, set by make_experiment; names the wandb run."""
     train_job_id: str
     """Training run under $RUNS_DIR; also where results land."""
     checkpoint: Optional[str]

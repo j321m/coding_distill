@@ -100,6 +100,7 @@ def make_experiment(name, parameters, entry_point="main", gpus=None, **kwargs):
         parameters=Munch(
             entry_point=entry_point,
             gpus=gpus,
+            experiment_name=name,
             git_commit=commit,
             git_dirty=dirty,
             git_diff=diff,

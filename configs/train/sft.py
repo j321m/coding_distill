@@ -2,8 +2,7 @@
 
 Hyperparameters follow open-r1's own SFT recipe for this dataset
 (recipes/OpenR1-Distill-7B/sft/config_distill.yaml), so a bad result is
-attributable to something other than a guessed learning rate. The exception is
-the effective batch: 512, where the recipe has 128.
+attributable to something other than a guessed learning rate.
 
 Probe before committing to the full run -- Liger is untestable outside CUDA and
 no-ops silently on an unsupported architecture:
@@ -13,9 +12,10 @@ no-ops silently on an unsupported architecture:
 
 from configs.common import make_experiment
 
+# effective batch 128, the open-r1 recipe value: 4 GPUs x 1 x 32.
 GPUS = 4
 BATCH_SIZE = 1
-GRADIENT_ACCUMULATION_STEPS = 128
+GRADIENT_ACCUMULATION_STEPS = 32
 
 experiment = make_experiment(
     "sft",
@@ -42,7 +42,7 @@ experiment = make_experiment(
         "train.warmup_steps": 0.03,  # below 1 = fraction of total steps
         "train.batch_size": BATCH_SIZE,
         "train.gradient_accumulation_steps": GRADIENT_ACCUMULATION_STEPS,
-        "train.num_epochs": 5,
+        "train.num_epochs": 1,
         "train.max_steps": -1,  # epochs decide the length
         "train.gradient_checkpointing": True,
         "train.sampling_strategy": "group_by_length",
