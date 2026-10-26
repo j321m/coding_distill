@@ -10,8 +10,7 @@ no-ops silently on an unsupported architecture:
     pixi run mrun --context helios run configs/train/sft.py     # after a max_steps probe
 """
 
-from configs.common import data_params, make_experiment
-from configs.data.tokenize import TOKENIZE
+from configs.common import make_experiment
 
 # effective batch 128, the open-r1 recipe value: 4 GPUs x 1 x 32.
 GPUS = 4
@@ -21,12 +20,21 @@ GRADIENT_ACCUMULATION_STEPS = 32
 experiment = make_experiment(
     "sft",
     {
-        "model.name": TOKENIZE["tokenizer"],
+        "model.name": "Qwen/Qwen2.5-Coder-0.5B-Instruct",
         "model.tokenizer": None,
         "model.pad_token": "<|endoftext|>",
-        **data_params(
-            TOKENIZE, data_dir="$DATA_DIR", filter_max_tokens=None, filter_n=None
-        ),
+        # the artifact configs/data/tokenize.py built; checked against its meta.json
+        "data.dataset": "open-r1/codeforces-cots",
+        "data.config": "solutions_py_decontaminated",
+        "data.split": "train",
+        "data.tokenizer": "Qwen/Qwen2.5-Coder-0.5B-Instruct",
+        "data.max_length": 32768,
+        "data.drop_finish_reason": "length",
+        "data.test_size": 0.05,
+        "data.split_seed": 0,
+        "data.data_dir": "$DATA_DIR",
+        "data.filter_max_tokens": None,
+        "data.filter_n": None,
         "train.output_dir": "$RUNS_DIR",
         "train.learning_rate": 4e-5,
         "train.lr_scheduler_type": "cosine_with_min_lr",
