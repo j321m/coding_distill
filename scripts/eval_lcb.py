@@ -22,6 +22,7 @@ from src.lcb import (
     install_prompt_style,
     main,
     readable_checkpoint,
+    stop_on_eos_only,
 )
 from src.lcb_eval_prompts import CODE_FENCE, build_sft_template
 from src.provenance import write_run_metadata
@@ -118,6 +119,7 @@ os.chdir(output_dir)
 
 language = params.get("prompt_language", "python")
 install_prompt_style(model_repr, checkpoint, build_sft_template(tokenizer, language))
+stop_on_eos_only()
 
 sys.argv = lcb_argv(model_repr, checkpoint, params)
 print(

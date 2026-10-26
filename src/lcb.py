@@ -24,6 +24,7 @@ try:
         LMStyle,
     )
     from lcb_runner.prompts import code_generation  # noqa: E402
+    from lcb_runner.runner import main as _main_module  # noqa: E402
     from lcb_runner.runner.main import main  # noqa: E402
     from lcb_runner.runner.parser import get_args  # noqa: E402
     from lcb_runner.runner.scenario_router import build_prompt_benchmark  # noqa: E402
@@ -39,6 +40,7 @@ __all__ = [
     "install_prompt_style",
     "main",
     "readable_checkpoint",
+    "stop_on_eos_only",
 ]
 
 
@@ -70,6 +72,24 @@ def readable_checkpoint(params, output_dir):
         json.dump(config, file, indent=2)
     print(f"rewrote {config_name} for transformers 4.x at {target}")
     return target
+
+
+def stop_on_eos_only():
+    """Drop the runner's default `--stop "###"`.
+
+    22-23% of codeforces-cots traces open the answer with `### Approach`, so a
+    model that learned the format is cut off before its code. lighteval, which
+    produced the published scores, uses no stop sequence. `main()` resolves
+    `get_args` from its own module globals, hence the rebinding there.
+    """
+    parse = _main_module.get_args
+
+    def get_args():
+        args = parse()
+        args.stop = []
+        return args
+
+    _main_module.get_args = get_args
 
 
 def install_prompt_style(model_repr, checkpoint, template):
