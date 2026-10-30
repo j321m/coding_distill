@@ -30,19 +30,21 @@ from src.provenance import load_git, write_run_metadata
 from src.tracking import init_wandb
 
 
-def report_generation_lengths(model_repr, tokenizer, max_tokens, run):
+def report_generation_lengths(model_repr, tokenizer, max_tokens, language, run):
     """% of samples that hit the token cap, and % that contain a code fence."""
     path = get_output_path(model_repr, get_args())
     if not os.path.exists(path):
         print(f"no generations found to measure at {path}")
         return
 
-    lengths, fenced = [], 0
+    fence = CODE_FENCE[language]
+    lengths, fenced, finished = [], 0, 0
     with open(path) as file:
         for entry in json.load(file):
             for text in entry.get("output_list") or []:
                 lengths.append(len(tokenizer(text)["input_ids"]))
-                fenced += bool(CODE_FENCE.search(text))
+                fenced += bool(fence.search(text))
+                finished += "</think>" in text
     if not lengths:
         print(f"no generations found to measure in {path}")
         return
@@ -55,6 +57,8 @@ def report_generation_lengths(model_repr, tokenizer, max_tokens, run):
         "lcb/tokens_max": lengths[-1],
         "lcb/pct_hit_cap": 100 * sum(n >= max_tokens for n in lengths) / len(lengths),
         "lcb/pct_with_fence": 100 * fenced / len(lengths),
+        # reasoning that never concludes is the failure score alone hides
+        "lcb/pct_think_closed": 100 * finished / len(lengths),
     }
     print(stats)
     if run is not None:
@@ -114,7 +118,8 @@ metadata = write_run_metadata(output_dir, {**dataclasses.asdict(params), **load_
 run = init_wandb(metadata) if params.report_to == "wandb" else None
 os.chdir(output_dir)
 
-install_prompt_style(model_repr, checkpoint, build_sft_template(tokenizer))
+language = params.get("prompt_language", "python")
+install_prompt_style(model_repr, checkpoint, build_sft_template(tokenizer, language))
 
 sys.argv = lcb_argv(model_repr, checkpoint, params)
 print(
@@ -127,4 +132,4 @@ selected, _ = build_prompt_benchmark(get_args())
 print(f"problems selected by {params.start_date}..{params.end_date}: {len(selected)}")
 
 main()
-report_generation_lengths(model_repr, tokenizer, params.max_tokens, run)
+report_generation_lengths(model_repr, tokenizer, params.max_tokens, language, run)

@@ -1,10 +1,12 @@
-"""The prompt this model was fine-tuned on, reproduced for evaluation."""
+"""The prompts the model was fine-tuned on, reproduced for evaluation."""
 
 import re
 
-# The invariant part of every training prompt, taken verbatim from the tokenized
-# artifact (everything before the problem statement is identical across samples).
-SFT_PROMPT_HEAD = (
+# Verbatim from the tokenized artifact: everything before the problem statement
+# is identical across samples, and differs between the Python and C++ configs by
+# more than the language -- solutions_py_decontaminated carries the long
+# "Analyze the maximum input constraints" head that the C++ one does not.
+PY_HEAD = (
     "\nYou will be given a competitive programming problem.\n"
     "Analyze the maximum input constraints and identify the optimal algorithmic "
     "approach and data structures needed to process the largest possible test "
@@ -15,9 +17,7 @@ SFT_PROMPT_HEAD = (
     "memory usage.\n\n"
 )
 
-# Every codeforces-cots trace is stdin/stdout, so this half is what the model was
-# actually trained on.
-SFT_PROMPT_STDIN = (
+PY_STDIN = (
     "Your solution must read input from standard input (input()), write output "
     "to standard output (print()).\n"
     "Do not include any debug prints or additional output.\n\n"
@@ -25,31 +25,52 @@ SFT_PROMPT_STDIN = (
     "```python\n<your code here>\n```\n\n"
 )
 
-# A quarter of LiveCodeBench is LeetCode-style, where the checker calls a method
-# rather than running a program. Asking those for stdin/stdout scores zero however
-# good the answer is, so they get upstream's instruction instead -- off
-# distribution for this model, but at least the right task.
-SFT_PROMPT_STARTER = (
+# LeetCode-style problems: the checker calls a method rather than running a
+# program, so asking for stdin/stdout scores zero however good the answer is
+PY_STARTER = (
     "You will use the following starter code to write the solution to the problem "
     "and enclose your code within delimiters.\n\n"
     "```python\n{starter_code}\n```\n\n"
 )
 
-# the fence SFT_PROMPT_STDIN asks for, so a generation can be checked for it
-CODE_FENCE = re.compile(r"```python", re.IGNORECASE)
+CPP_HEAD = (
+    "You will be given a competitive programming problem. Please reason step by "
+    "step about the solution, then provide a complete implementation in C++17.\n\n"
+)
+
+CPP_STDIN = (
+    "Your solution must read input from standard input (cin), write output to "
+    "standard output (cout).\n"
+    "Do not include any debug prints or additional output.\n\n"
+    "Put your final solution within a single code block:\n"
+    "```cpp\n<your code here>\n```\n\n"
+)
+
+# the fence each prompt asks for, so a generation can be checked for it
+CODE_FENCE = {
+    "python": re.compile(r"```python", re.IGNORECASE),
+    "cpp": re.compile(r"```cpp", re.IGNORECASE),
+}
 
 
-def build_sft_template(tokenizer):
+def build_sft_template(tokenizer, language="python"):
     """The question -> prompt function LiveCodeBench should call."""
 
-    def sft_question_template(question):
+    def python_body(question):
         """Branches on `starter_code` the way every upstream template does."""
-        body = (
-            SFT_PROMPT_STARTER.format(starter_code=question.starter_code)
-            if question.starter_code
-            else SFT_PROMPT_STDIN
-        )
-        content = SFT_PROMPT_HEAD + body + "# Problem\n\n" + question.question_content
+        if question.starter_code:
+            return PY_HEAD + PY_STARTER.format(starter_code=question.starter_code)
+        return PY_HEAD + PY_STDIN
+
+    def cpp_body(question):
+        # no starter-code branch: those problems are Python method stubs, which
+        # this prompt has no way to express
+        return CPP_HEAD + CPP_STDIN
+
+    body = python_body if language == "python" else cpp_body
+
+    def sft_question_template(question):
+        content = body(question) + "# Problem\n\n" + question.question_content
         return tokenizer.apply_chat_template(
             [{"role": "user", "content": content}],
             tokenize=False,
