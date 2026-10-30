@@ -24,6 +24,7 @@ from src.lcb import (
     install_prompt_style,
     main,
     readable_checkpoint,
+    stop_on_eos_only,
 )
 from src.lcb_eval_prompts import CODE_FENCE, build_sft_template
 from src.provenance import load_git, write_run_metadata
@@ -114,7 +115,9 @@ metadata = write_run_metadata(output_dir, {**dataclasses.asdict(params), **load_
 run = init_wandb(metadata) if params.report_to == "wandb" else None
 os.chdir(output_dir)
 
-install_prompt_style(model_repr, checkpoint, build_sft_template(tokenizer))
+language = params.get("prompt_language", "python")
+install_prompt_style(model_repr, checkpoint, build_sft_template(tokenizer, language))
+stop_on_eos_only()
 
 sys.argv = lcb_argv(model_repr, checkpoint, params)
 print(
