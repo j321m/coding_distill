@@ -26,7 +26,11 @@ if __name__ == "__main__":
 
     # not flags: no schema has them. And not argv or env either: Linux caps a
     # single string there at 128KB, which a dirty tree's diff can exceed.
-    with tempfile.NamedTemporaryFile("w", suffix=".json", delete=False) as git_file:
+    # In the cwd, not /tmp: mrunner cd's into the experiment dir on shared
+    # storage, and every node of a multi-node job has to be able to read it.
+    with tempfile.NamedTemporaryFile(
+        "w", suffix=".json", dir=os.getcwd(), delete=False
+    ) as git_file:
         json.dump({key: cfg.pop(key, None) for key in GIT_KEYS}, git_file)
 
     flags = []
@@ -44,18 +48,40 @@ if __name__ == "__main__":
 
     # one process per GPU (DDP); a single process on several GPUs makes
     # Trainer fall back to DataParallel, which gathers all logits on GPU 0.
+    # `gpus` counts every node (configs/common.py); torchrun gets the per-node share.
+    nodes = int(os.environ.get("SLURM_JOB_NUM_NODES", 1))
+    prefix = []
     if ENTRY_POINTS[module] and gpus > 1:
+        if gpus % nodes:
+            raise SystemExit(f"gpus={gpus} does not split over {nodes} nodes")
         # --tee 3: prefix every stdout/stderr line with the rank that wrote it
         launcher = [
             "-m",
             "torch.distributed.run",
-            f"--nproc-per-node={gpus}",
+            f"--nnodes={nodes}",
+            f"--nproc-per-node={gpus // nodes}",
             "--tee",
             "3",
         ]
+        if nodes > 1:
+            # an sbatch body runs on the first node only; srun runs the launcher
+            # once per node (--ntasks-per-node=1 in clusters.yaml), and the c10d
+            # rendezvous at MASTER_ADDR:MASTER_PORT (set in prolog_cmd) assigns
+            # node ranks, so nothing here depends on per-node variables
+            launcher += [
+                "--rdzv-backend=c10d",
+                f"--rdzv-id={os.environ['SLURM_JOB_ID']}",
+                f"--rdzv-endpoint={os.environ['MASTER_ADDR']}:{os.environ['MASTER_PORT']}",
+            ]
+            # --kill-on-bad-exit: one rank dying takes the step down instead of
+            # leaving the other nodes waiting at the next collective
+            prefix = ["srun", "--ntasks-per-node=1", "--kill-on-bad-exit=1"]
+            if "SLURM_CPUS_PER_TASK" in os.environ:
+                # srun since Slurm 22.05 no longer inherits it from sbatch
+                prefix.append(f"--cpus-per-task={os.environ['SLURM_CPUS_PER_TASK']}")
     else:
         launcher = []
-    cmd = [sys.executable, *launcher, "-m", module] + flags
+    cmd = [*prefix, sys.executable, *launcher, "-m", module] + flags
     print("Running command:", cmd, flush=True)
     try:
         subprocess.run(cmd, check=True, env={**os.environ, GIT_ENV: git_file.name})

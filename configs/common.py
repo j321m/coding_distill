@@ -49,16 +49,19 @@ def _git_info():
 
 
 def _context_gpus():
-    """GPUs the mrunner context being submitted to requests (`--gres=gpu:N` in
-    its sbatch_options); None outside `mrunner run`, e.g. `pixi run debug`."""
+    """GPUs the mrunner context being submitted to requests, across all of its
+    nodes: `--gres=gpu:N` in its sbatch_options times its `nodes` (1 when
+    unset). None outside `mrunner run`, e.g. `pixi run debug`."""
     ctx = click.get_current_context(silent=True)
     if ctx is None or not ctx.obj:
         return None
-    for option in ctx.obj["context"].get("sbatch_options", []):
+    context = ctx.obj["context"]
+    per_node = 0
+    for option in context.get("sbatch_options", []):
         match = re.fullmatch(r"--gres=gpu:(\d+)", option)
         if match:
-            return int(match.group(1))
-    return 0
+            per_node = int(match.group(1))
+    return per_node * int(context.get("nodes", 1))
 
 
 def make_experiment(name, parameters, entry_point="main", gpus=None, **kwargs):
@@ -67,9 +70,9 @@ def make_experiment(name, parameters, entry_point="main", gpus=None, **kwargs):
     Every job runs mrunner_run.py, which starts `entry_point` (a module, e.g.
     `scripts.eval_lcb`) with `parameters` as tyro flags.
 
-    `gpus` is required for training: the effective batch depends on it, so the
-    submit fails unless the context grants exactly that many. mrunner_run.py
-    starts one process per GPU from it.
+    `gpus` is required for training and counts every node: the effective batch
+    depends on it, so the submit fails unless the context grants exactly that
+    many. mrunner_run.py starts one process per GPU on every node from it.
 
     `git_*` rides in `parameters` because the slurm backend ignores
     `Experiment.env` (only `backends/k8s.py` reads it), so the pickled parameters

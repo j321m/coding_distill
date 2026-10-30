@@ -19,6 +19,9 @@ class ModelArgs:
     dataset. None = the model's."""
     pad_token: str
     """Set on the tokenizer; many LMs ship without one."""
+    dtype: Optional[str]
+    """torch dtype to load the weights in, e.g. `float32` for fp32 master
+    weights under FSDP; None = the checkpoint's own."""
 
 
 @dataclass
@@ -71,12 +74,19 @@ class TrainArgs:
     """Epochs; ignored when max_steps > 0."""
     max_steps: int
     """Total optimizer steps; -1 to train for num_epochs."""
+    max_grad_norm: float
+    """Gradient clipping threshold; HF's default is 1.0."""
     gradient_checkpointing: bool
     """Recompute activations in backward."""
     sampling_strategy: Literal["random", "group_by_length"]
     """Train sampler; `group_by_length` reads the dataset's `length` column."""
     use_liger_kernel: bool
     """Patch the model with Liger's default kernels (CUDA only)."""
+    fsdp: Optional[str]
+    """FSDP options, e.g. `full_shard auto_wrap`: shards weights, grads and
+    optimizer state over every process on every node. None = DDP."""
+    fsdp_config: Optional[dict[str, str]]
+    """FSDP settings, e.g. `transformer_layer_cls_to_wrap Qwen2DecoderLayer`."""
     bf16: bool
     """bf16 mixed precision; off on CPU."""
     logging_steps: int
@@ -89,10 +99,17 @@ class TrainArgs:
     """Eval every N steps, for `eval_strategy=steps`."""
     eval_batch_size: int
     """Per-device eval batch size."""
+    save_strategy: Literal["no", "steps", "epoch"]
+    """When to checkpoint."""
     save_steps: int
-    """Checkpoint every N steps."""
+    """Checkpoint every N steps, for `save_strategy=steps`."""
     save_total_limit: Optional[int]
     """Checkpoints kept; None = all."""
+    resume_job_id: Optional[str]
+    """SLURM job id of a killed run: continue from its newest checkpoint under
+    `output_dir`'s parent (optimizer and lr schedule included)."""
+    resume_from_checkpoint: Optional[str]
+    """Explicit checkpoint path to continue from; overrides `resume_job_id`."""
     report_to: Literal["wandb", "none"]
     """Metrics sink."""
 
