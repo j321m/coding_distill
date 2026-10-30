@@ -13,6 +13,7 @@ experiment = make_experiment(
         "model.name": "trl-internal-testing/tiny-Qwen2ForCausalLM-2.5",
         "model.tokenizer": "Qwen/Qwen2.5-Coder-0.5B-Instruct",  # built the data
         "model.pad_token": "<|endoftext|>",
+        "model.dtype": None,
         # the artifact configs/data/tokenize_debug.py produced
         "data.dataset": "open-r1/codeforces-cots",
         "data.config": "solutions_py_decontaminated",
@@ -34,17 +35,23 @@ experiment = make_experiment(
         "train.gradient_accumulation_steps": 1,
         "train.num_epochs": 1,
         "train.max_steps": 5,
+        "train.max_grad_norm": 1.0,
         "train.gradient_checkpointing": False,
         "train.sampling_strategy": "random",
         "train.use_liger_kernel": False,  # CUDA only
+        "train.fsdp": None,
+        "train.fsdp_config": None,
         "train.bf16": False,
         "train.logging_steps": 1,
         "train.logging_first_step": False,
         "train.eval_strategy": "no",
         "train.eval_steps": None,
         "train.eval_batch_size": 1,
+        "train.save_strategy": "steps",
         "train.save_steps": 1000,
         "train.save_total_limit": None,
+        "train.resume_job_id": None,
+        "train.resume_from_checkpoint": None,
         "train.report_to": "none",
     },
     gpus=0,  # CPU
